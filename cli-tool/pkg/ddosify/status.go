@@ -4,11 +4,9 @@ import (
 	"log"
 )
 
-func RunCommandStatus() error {
-	lc := NewLatencyChecker("")
+func (lc *LatencyChecker) RunCommandStatus() error {
 
-	targetURL := lc.GetTargetURL()
-	log.Printf("TargetURL %s", targetURL)
+	log.Printf("TargetURL %s", lc.TargetUrl)
 	return nil
 }
 

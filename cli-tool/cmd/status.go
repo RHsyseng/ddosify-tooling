@@ -5,10 +5,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	targetURL string
+)
+
 func addRunFlags(cmd *cobra.Command) {
 
 	flags := cmd.Flags()
-	flags.String("target-url", "https://google.com", "The target url.")
+	flags.StringVar(&targetURL, "target-url", "https://google.com", "The target url.")
 }
 
 func NewStatusCommand() *cobra.Command {
@@ -17,7 +21,8 @@ func NewStatusCommand() *cobra.Command {
 		Use:   "status",
 		Short: "Run the status command",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return ddosify.RunCommandStatus()
+			lc := ddosify.NewLatencyChecker(targetURL)
+			return lc.RunCommandStatus()
 		},
 	}
 
