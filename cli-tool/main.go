@@ -27,7 +27,7 @@ func newCommand() *cobra.Command {
 		},
 	}
 
-	c.AddCommand(cmd.NewStatusCommand())
+	c.AddCommand(cmd.NewExecCommand())
 
 	return c
 }
