@@ -1,10 +1,11 @@
 package main
 
 import (
+	"log"
+
 	"github.com/TwiN/go-color"
 	"github.com/rhsyseng/ddosify-tooling/cli-tool/cmd"
 
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -15,6 +16,7 @@ func main() {
 	if err := command.Execute(); err != nil {
 		log.Fatalf(color.InRed("[ERROR]")+"%s", err.Error())
 	}
+
 }
 
 func newCommand() *cobra.Command {

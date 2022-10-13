@@ -3,9 +3,10 @@ package ddosify
 import (
 	"errors"
 	"log"
+	"time"
 )
 
-func (lc *LatencyChecker) RunCommandExec() error {
+func (lc *LatencyChecker) RunCommandExec() (LatencyCheckerOutputList, error) {
 
 	// Get number of runs, each run costs 5k tokens. Validate we have enough tokens to do all requests
 	availableTokens, err := lc.doGetTokenRequest()
@@ -25,18 +26,24 @@ func (lc *LatencyChecker) RunCommandExec() error {
 			log.Println("unexpected error")
 			break
 		}
-		return err
+		return LatencyCheckerOutputList{}, err
 	}
 
 	// We have the available tokens
 	requiredTokens := lc.GetRuns() * DDOSIFY_LATENCY_TOKENS_COST
 	log.Printf("Required tokens for this exection %d, available tokens: %d", requiredTokens, availableTokens)
 	if availableTokens < requiredTokens {
-		return errors.New(" insufficient tokens")
+		return LatencyCheckerOutputList{}, errors.New(" insufficient tokens")
 	}
+	// We need to wait before sending a new API request, otherwise we get throttled
+	time.Sleep(DDOSIFY_API_THROTTLER_TIME * time.Second)
+
+	latencyResults := make(map[string]float64)
 
 	for i := 1; i <= lc.GetRuns(); i++ {
 		// TODO: add progress bar
+		// TODO: wait the interval time
+		// TODO: validate the interval time parameter (investigate if we can delegate the validation to cobra somehow)
 		log.Printf("Run number %d", i)
 		// Run the latency check
 		responseLatencyCheck, err := lc.doPostLatencyCheckRequest()
@@ -44,18 +51,27 @@ func (lc *LatencyChecker) RunCommandExec() error {
 			log.Println("Error doing Latency Check Request", err.Error())
 		}
 		for key, val := range responseLatencyCheck {
-			log.Println(key)
-			log.Println(val.(map[string]interface{})["avg_duration"])
-			log.Println(val.(map[string]interface{})["status_code"])
+			latency := val.(map[string]interface{})["latency"]
+			status_code := val.(map[string]interface{})["status_code"]
+
+			// If a location fails, we want to penalize it
+			if status_code.(float64) != 200 {
+				latency = 1000
+			}
+			latencyResults[key] += latency.(float64)
+
 		}
 
 	}
 
-	log.Printf("TargetURL %s, Number of Runs: %d, Wait interval: %s, Locations: %s", lc.GetTargetURL(), lc.GetRuns(), lc.GetWaitInterval(), lc.GetLocations())
-	return nil
-}
+	var outputList LatencyCheckerOutputList
+	var output LatencyCheckerOutput
 
-func (lc *LatencyChecker) execStatus() error {
-
-	return nil
+	bestLocation, avgLatencies := lc.getMinimumLatencies(latencyResults)
+	for i := 0; i < lc.GetOutputLocationsNumber(); i++ {
+		output.AvgLatency = avgLatencies[i] / float64(lc.GetRuns())
+		output.Location = bestLocation[i]
+		outputList.Result = append(outputList.Result, output)
+	}
+	return outputList, nil
 }

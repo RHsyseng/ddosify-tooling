@@ -1,14 +1,15 @@
 package ddosify
 
 import (
-	"crypto/tls"
+	"bytes"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
-	"strings"
 )
 
 //getEnv returns the value for a given Env Var
@@ -35,13 +36,9 @@ func (lc *LatencyChecker) doGetTokenRequest() (int, error) {
 	if err != nil {
 		panic(err)
 	}
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
+
 	req.Header.Add("X-API-KEY", lc.GetAPIKey())
-	client := &http.Client{Transport: tr}
-	res, err := client.Do(req)
-	defer res.Body.Close()
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return -1, err
 	}
@@ -55,39 +52,71 @@ func (lc *LatencyChecker) doGetTokenRequest() (int, error) {
 	if res.StatusCode != http.StatusOK {
 		return -3, errors.New(" Status code received: " + strconv.Itoa(res.StatusCode) + " ...but status code expected: " + strconv.Itoa(http.StatusOK))
 	}
-
+	defer res.Body.Close()
 	return bodyResponse.RequestCount, nil
 
 }
 
 //doPostLatencyCheckRequest
 func (lc *LatencyChecker) doPostLatencyCheckRequest() (map[string]interface{}, error) {
+
 	var responseLatency map[string]interface{}
-	reqBody := &latencyAPIRequest{TargetURL: lc.GetTargetURL(), Locations: lc.GetLocations()}
+	reqBody := LatencyAPIRequest{
+		TargetURL: lc.TargetUrl,
+		Locations: lc.GetLocations(),
+	}
+
 	reqBodyJson, _ := json.Marshal(reqBody)
-	body := strings.NewReader(string(reqBodyJson))
+
+	body := bytes.NewReader(reqBodyJson)
+
 	req, err := http.NewRequest(http.MethodPost, DDOSIFY_LATENCY_API_URL, body)
 	if err != nil {
 		panic(err)
 	}
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
+
+	req.Header.Add("Content-Type", CONTENT_TYPE_REQ)
 	req.Header.Add("X-API-KEY", lc.GetAPIKey())
-	res, err := client.Do(req)
-	defer res.Body.Close()
+
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
+		log.Println("error request: ", err.Error())
 		return nil, err
 	}
+	defer res.Body.Close()
 
 	derr := json.NewDecoder(res.Body).Decode(&responseLatency)
 	if derr != nil {
+		log.Println(derr.Error())
 		return nil, derr
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New("[ERROR] Status code received: " + strconv.Itoa(res.StatusCode) + " ...but status code expected: " + strconv.Itoa(http.StatusOK))
+		return nil, errors.New(" Status code received: " + strconv.Itoa(res.StatusCode) + " ...but status code expected: " + strconv.Itoa(http.StatusOK))
 	}
+
 	return responseLatency, nil
+}
+
+//getMinimumLatencies returns the minimum avg latencies from a latencychecktest result
+func (lc *LatencyChecker) getMinimumLatencies(latencies map[string]float64) ([]string, []float64) {
+	outputKeys := make([]string, len(latencies))
+	outputLatency := make([]float64, len(latencies))
+	keys := make([]string, 0, len(latencies))
+	for k := range latencies {
+		keys = append(keys, k)
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		return latencies[keys[i]] < latencies[keys[j]]
+	})
+	// If more output than available latencies, we fix to the number of latencies
+	if lc.GetOutputLocationsNumber() > len(latencies) {
+		lc.SetOutputLocationsNumber(len(latencies))
+	}
+
+	for i := 0; i < lc.GetOutputLocationsNumber(); i++ {
+		outputKeys[i] = keys[i]
+		outputLatency[i] = latencies[keys[i]]
+	}
+	return outputKeys, outputLatency
 }
