@@ -6,7 +6,7 @@ import (
 
 func (lc *LatencyChecker) RunCommandStatus() error {
 
-	log.Printf("TargetURL %s", lc.TargetUrl)
+	log.Printf("TargetURL %s, Number of Runs: %d, Wait interval: %s", lc.GetTargetURL(), lc.GetRuns(), lc.GetWaitInterval())
 	return nil
 }
 

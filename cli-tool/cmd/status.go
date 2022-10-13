@@ -6,13 +6,18 @@ import (
 )
 
 var (
-	targetURL string
+	targetURL    string
+	numberOfRuns int
+	waitInterval string
 )
 
 func addRunFlags(cmd *cobra.Command) {
 
 	flags := cmd.Flags()
-	flags.StringVar(&targetURL, "target-url", "https://google.com", "The target url.")
+	flags.StringVar(&targetURL, "target-url", "", "The target url. e.g: https://google.com")
+	flags.IntVar(&numberOfRuns, "runs", 1, "The number of executions.")
+	flags.StringVar(&waitInterval, "interval", "1m", "The amount of waiting time between runs.")
+	cmd.MarkFlagRequired("target-url")
 }
 
 func NewStatusCommand() *cobra.Command {
@@ -21,7 +26,7 @@ func NewStatusCommand() *cobra.Command {
 		Use:   "status",
 		Short: "Run the status command",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			lc := ddosify.NewLatencyChecker(targetURL)
+			lc := ddosify.NewLatencyChecker(targetURL, numberOfRuns, waitInterval)
 			return lc.RunCommandStatus()
 		},
 	}
