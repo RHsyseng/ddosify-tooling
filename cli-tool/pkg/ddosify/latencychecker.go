@@ -20,12 +20,12 @@ type LatencyChecker struct {
 }
 
 type LatencyCheckerOutput struct {
-	Location   string  `json:"location"`
-	AvgLatency float64 `json:"avgLatency"`
+	Location   string  `json:"location",yaml:"location"`
+	AvgLatency float64 `json:"avgLatency",yaml:"avgLatency"`
 }
 
 type LatencyCheckerOutputList struct {
-	Result []LatencyCheckerOutput `json:"result"`
+	Result []LatencyCheckerOutput `json:"result",yaml:"result"`
 }
 
 type tokenAPIResponse struct {

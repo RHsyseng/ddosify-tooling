@@ -31,7 +31,7 @@ func (lc *LatencyChecker) RunCommandExec() (LatencyCheckerOutputList, error) {
 
 	// We have the available tokens
 	requiredTokens := lc.GetRuns() * DDOSIFY_LATENCY_TOKENS_COST
-	log.Printf("Required tokens for this exection %d, available tokens: %d", requiredTokens, availableTokens)
+	log.Printf("Required tokens for this execution %d, available tokens: %d", requiredTokens, availableTokens)
 	if availableTokens < requiredTokens {
 		return LatencyCheckerOutputList{}, errors.New(" insufficient tokens")
 	}
@@ -40,16 +40,16 @@ func (lc *LatencyChecker) RunCommandExec() (LatencyCheckerOutputList, error) {
 
 	latencyResults := make(map[string]float64)
 
+	log.Printf("Sleeping %ds between latency requests", lc.GetWaitInterval())
+
 	for i := 1; i <= lc.GetRuns(); i++ {
-		// TODO: add progress bar
-		// TODO: wait the interval time
-		// TODO: validate the interval time parameter (investigate if we can delegate the validation to cobra somehow)
-		log.Printf("Run number %d", i)
+		log.Printf("Request number [%d/%d]", i, lc.GetRuns())
 		// Run the latency check
 		responseLatencyCheck, err := lc.doPostLatencyCheckRequest()
 		if err != nil {
 			log.Println("Error doing Latency Check Request", err.Error())
 		}
+
 		for key, val := range responseLatencyCheck {
 			latency := val.(map[string]interface{})["latency"]
 			status_code := val.(map[string]interface{})["status_code"]
@@ -59,7 +59,10 @@ func (lc *LatencyChecker) RunCommandExec() (LatencyCheckerOutputList, error) {
 				latency = 1000
 			}
 			latencyResults[key] += latency.(float64)
-
+		}
+		if lc.GetRuns() > 1 {
+			// Wait before running next iteration
+			time.Sleep(time.Duration(lc.GetWaitInterval()) * time.Second)
 		}
 
 	}

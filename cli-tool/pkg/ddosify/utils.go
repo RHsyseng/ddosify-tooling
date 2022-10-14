@@ -38,7 +38,7 @@ func IntervalTimeToSeconds(interval string) int {
 	captureGroups := r.FindStringSubmatch(interval)
 	timeValue, _ := strconv.Atoi(captureGroups[1])
 	timeUnit := captureGroups[2]
-	log.Printf("TimeValue: %d TimeUnit: %s", timeValue, timeUnit)
+
 	switch timeUnit {
 	case "s":
 		return timeValue

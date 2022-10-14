@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"log"
 
 	"github.com/rhsyseng/ddosify-tooling/cli-tool/pkg/ddosify"
 	"github.com/spf13/cobra"
@@ -14,6 +13,7 @@ var (
 	waitInterval          string
 	locations             []string
 	outputLocationsNumber int
+	outputFormat          string
 )
 
 func addExecFlags(cmd *cobra.Command) {
@@ -24,6 +24,7 @@ func addExecFlags(cmd *cobra.Command) {
 	flags.StringVarP(&waitInterval, "interval", "i", "1m", "The amount of waiting time between runs.")
 	flags.StringArrayVarP(&locations, "locations", "l", []string{"EU.ES.*"}, "The array of locations to be requested. e.g: NA.US.*,NA.EU.*")
 	flags.IntVar(&outputLocationsNumber, "output-locations", 1, "The number of best locations to output.")
+	flags.StringVarP(&outputFormat, "output-format", "o", "table", "Output in an specific format. Usage: '-o [ table | yaml | json ]'")
 	cmd.MarkFlagRequired("target-url")
 }
 
@@ -33,29 +34,40 @@ func NewExecCommand() *cobra.Command {
 		Use:   "run",
 		Short: "Exec the run command",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO: Create validator function for all flags
-			// TODO: Validate interval is valid
-			validInterval := ddosify.ValidateIntervalTime(waitInterval)
-			if !validInterval {
-				return errors.New(" not valid interval")
-			}
-			// Validate URL is valid
-			validURL := ddosify.ValidateURL(targetURL)
-			if !validURL {
-				return errors.New(" not valid url")
+			// Validate command Args
+			err := validateCommandArgs()
+			if err != nil {
+				return err
 			}
 			// Get waitIntervalInSeconds
 			waitIntervalSeconds := ddosify.IntervalTimeToSeconds(waitInterval)
-			log.Printf("Wait interval: %ds", waitIntervalSeconds)
 			lc := ddosify.NewLatencyChecker(targetURL, numberOfRuns, waitIntervalSeconds, locations, outputLocationsNumber)
 			res, err := lc.RunCommandExec()
-			// TODO: Make output prettier
-			log.Println(res)
+			switch {
+			case outputFormat == "yaml":
+				writeOutputYaml(res)
+			case outputFormat == "json":
+				writeOutputJson(res)
+			default:
+				writeOutputTable(res)
+			}
 			return err
 		},
 	}
-
 	addExecFlags(cmd)
-
 	return cmd
+}
+
+// validateCommandArgs validates that arguments passed by the user are valid
+func validateCommandArgs() error {
+	validInterval := ddosify.ValidateIntervalTime(waitInterval)
+	if !validInterval {
+		return errors.New(" not valid interval")
+	}
+	// Validate URL is valid
+	validURL := ddosify.ValidateURL(targetURL)
+	if !validURL {
+		return errors.New(" not valid url")
+	}
+	return nil
 }
