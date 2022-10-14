@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 )
@@ -24,6 +25,30 @@ func getEnv(varName string, defaultValue string) string {
 func ValidateURL(inputURL string) bool {
 	u, err := url.Parse(inputURL)
 	return err == nil && u.Scheme != "" && u.Host != ""
+}
+
+func ValidateIntervalTime(interval string) bool {
+	r := regexp.MustCompile(`^(\d*)(s|m|h)`)
+	matched := r.MatchString(interval)
+	return matched
+}
+
+func IntervalTimeToSeconds(interval string) int {
+	r := regexp.MustCompile(`^(\d*)(s|m|h)`)
+	captureGroups := r.FindStringSubmatch(interval)
+	timeValue, _ := strconv.Atoi(captureGroups[1])
+	timeUnit := captureGroups[2]
+	log.Printf("TimeValue: %d TimeUnit: %s", timeValue, timeUnit)
+	switch timeUnit {
+	case "s":
+		return timeValue
+	case "m":
+		return timeValue * 60
+	case "h":
+		return timeValue * 3600
+	default:
+		return 1
+	}
 }
 
 // doGetTokenRequest gets the list of valid locations
@@ -57,7 +82,7 @@ func (lc *LatencyChecker) doGetTokenRequest() (int, error) {
 
 }
 
-//doPostLatencyCheckRequest
+//doPostLatencyCheckRequest runs a latency check and returns its result
 func (lc *LatencyChecker) doPostLatencyCheckRequest() (map[string]interface{}, error) {
 
 	var responseLatency map[string]interface{}

@@ -35,12 +35,19 @@ func NewExecCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// TODO: Create validator function for all flags
 			// TODO: Validate interval is valid
+			validInterval := ddosify.ValidateIntervalTime(waitInterval)
+			if !validInterval {
+				return errors.New(" not valid interval")
+			}
 			// Validate URL is valid
 			validURL := ddosify.ValidateURL(targetURL)
 			if !validURL {
 				return errors.New(" not valid url")
 			}
-			lc := ddosify.NewLatencyChecker(targetURL, numberOfRuns, waitInterval, locations, outputLocationsNumber)
+			// Get waitIntervalInSeconds
+			waitIntervalSeconds := ddosify.IntervalTimeToSeconds(waitInterval)
+			log.Printf("Wait interval: %ds", waitIntervalSeconds)
+			lc := ddosify.NewLatencyChecker(targetURL, numberOfRuns, waitIntervalSeconds, locations, outputLocationsNumber)
 			res, err := lc.RunCommandExec()
 			// TODO: Make output prettier
 			log.Println(res)

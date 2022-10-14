@@ -12,7 +12,7 @@ const (
 type LatencyChecker struct {
 	TargetUrl             string   //This is the basic Target URL to be used
 	Runs                  int      //This is the number of executions to be run
-	WaitInterval          string   //This is the amount of time to wait between runs
+	WaitInterval          int      //This is the amount of time to wait between runs (in seconds)
 	Locations             []string //This is the locations to be used for the latency check
 	APIKey                string   //This is the API Key to authenticate to ddosify (we get this from an ENV var)
 	ContentType           string   //This is the content type used to interact with the ddosify API
@@ -39,7 +39,7 @@ type LatencyAPIRequest struct {
 }
 
 //NewLatencyChecker is the object constructor
-func NewLatencyChecker(targetURL string, runs int, waitInterval string, locations []string, outputLocationsNumber int) *LatencyChecker {
+func NewLatencyChecker(targetURL string, runs int, waitInterval int, locations []string, outputLocationsNumber int) *LatencyChecker {
 	return &LatencyChecker{
 		TargetUrl:             targetURL,
 		Runs:                  runs,
@@ -62,7 +62,7 @@ func (lc *LatencyChecker) GetRuns() int {
 }
 
 //GetWaitInterval is the get method to retrieve the WaitInterval attribute
-func (lc *LatencyChecker) GetWaitInterval() string {
+func (lc *LatencyChecker) GetWaitInterval() int {
 	return lc.WaitInterval
 }
 
@@ -81,27 +81,27 @@ func (lc *LatencyChecker) GetOutputLocationsNumber() int {
 	return lc.OutputLocationsNumber
 }
 
-//SetTargetURL is the get method to retrieve the TargetURL attribute
+//SetTargetURL is the setter method to set the TargetURL attribute
 func (lc *LatencyChecker) SetTargetURL(targetUrl string) {
 	lc.TargetUrl = targetUrl
 }
 
-//SetRuns is the get method to retrieve the Runs attribute
+//SetRuns is the setter method to set the Runs attribute
 func (lc *LatencyChecker) SetRuns(runs int) {
 	lc.Runs = runs
 }
 
-//SetWaitInterval is the get method to retrieve the WaitInterval attribute
-func (lc *LatencyChecker) SetWaitInterval(interval string) {
+//SetWaitInterval is the setter method to set the WaitInterval attribute
+func (lc *LatencyChecker) SetWaitInterval(interval int) {
 	lc.WaitInterval = interval
 }
 
-//SetLocations is the get method to retrieve the WaitInterval attribute
+//SetLocations is the setter method to set the WaitInterval attribute
 func (lc *LatencyChecker) SetLocations(locations []string) {
 	lc.Locations = locations
 }
 
-//SetOutputLocationsNumber is the get method to retrieve the Runs attribute
+//SetOutputLocationsNumber is the setter method to set the Runs attribute
 func (lc *LatencyChecker) SetOutputLocationsNumber(outputLocationsNumber int) {
 	lc.OutputLocationsNumber = outputLocationsNumber
 }
