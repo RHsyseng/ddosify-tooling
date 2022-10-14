@@ -105,7 +105,3 @@ func (lc *LatencyChecker) SetLocations(locations []string) {
 func (lc *LatencyChecker) SetOutputLocationsNumber(outputLocationsNumber int) {
 	lc.OutputLocationsNumber = outputLocationsNumber
 }
-
-// TODO: get tokens available https://api.ddosify.com/v1/balance/
-
-// TODO: run latency check https://api.ddosify.com/v1/latency/test/
