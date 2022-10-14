@@ -1,0 +1,78 @@
+name: Go App Build
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: Get Dependencies
+      working-directory: ./cli-tool/
+      run: go mod tidy
+
+# These two actions will be enabled at a later phase      
+#    - name: Run Linter
+#      uses: golangci/golangci-lint-action@v2
+#      with:
+#        working-directory: ./cli-tool/
+
+#    - name: Run Unit Tests
+#      working-directory: ./cli-tool/
+#      run: GOOS=linux GOARCH=amd64 go test -race -cover -v 
+
+    - name: Run Build
+      working-directory: ./cli-tool/
+      run: |
+        echo "Building Linux amd64 binary"
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ddosify-latencies-linux-amd64
+        echo "Building Linux arm64 binary"
+        CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o ddosify-latencies-linux-arm64
+        echo "Building Darwin amd64 binary"
+        CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ddosify-latencies-darwin-amd64
+        echo "Building Darwin arm64 binary"
+        CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ddosify-latencies-darwin-arm64
+        echo "Building Windows amd64 binary"
+        CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ddosify-latencies-windows-amd64.exe
+
+    - name: Save CLI Binaries Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ddosify-latencies-binaries
+        path: ./cli-tool/ddosify-latencies-*
+
+  release:
+    name: Creates a new release with the resulting binaries
+    needs: [build]
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+          - asset_name: ddosify-latencies-linux-amd64
+          - asset_name: ddosify-latencies-linux-arm64
+          - asset_name: ddosify-latencies-darwin-amd64
+          - asset_name: ddosify-latencies-darwin-arm64
+          - asset_name: ddosify-latencies-windows-amd64.exe
+    steps:
+    - name: Pull the cli binaries from Artifacts
+      uses: actions/download-artifact@v3
+      # This without name downloads all artifacts stored
+  
+    - name: Upload binary to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: /tmp/${{ matrix.asset_name }}
+        asset_name: ${{ matrix.asset_name }}
+        tag: ${{ github.ref }}-release
+        overwrite: true
+        body: "Automatic release created by a GitHub Action"
