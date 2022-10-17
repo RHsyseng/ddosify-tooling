@@ -37,28 +37,3 @@ func writeOutputYaml(lcol ddosify.LatencyCheckerOutputList) {
 	o, _ := yaml.Marshal(lcol)
 	fmt.Println(string(o))
 }
-
-/*
-
-
-func writeOutputYaml(result v.WebData) {
-	ok := strings.Fields(fmt.Sprintf("%v", result.ResultOK))
-	ko := strings.Fields(fmt.Sprintf("%v", result.ResultKO))
-	con := strings.Fields(fmt.Sprintf("%v", result.ResultCon))
-
-	out := Output{
-		Auths: struct {
-			Valid           []string `yaml:"valid" json:"valid"`
-			Expired         []string `yaml:"expired" json:"expired"`
-			ConnectionIssue []string `yaml:"connection_issue" json:"connection_issue"`
-		}{
-			Valid:           ok,
-			Expired:         ko,
-			ConnectionIssue: con,
-		},
-	}
-
-	o, _ := yaml.Marshal(out)
-	fmt.Println(string(o))
-}
-*/

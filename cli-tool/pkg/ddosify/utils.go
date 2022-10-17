@@ -36,7 +36,13 @@ func ValidateIntervalTime(interval string) bool {
 func IntervalTimeToSeconds(interval string) int {
 	r := regexp.MustCompile(`^(\d*)(s|m|h)`)
 	captureGroups := r.FindStringSubmatch(interval)
-	timeValue, _ := strconv.Atoi(captureGroups[1])
+	if len(captureGroups) < 1 {
+		return -1
+	}
+	timeValue, err := strconv.Atoi(captureGroups[1])
+	if err != nil {
+		return -1
+	}
 	timeUnit := captureGroups[2]
 
 	switch timeUnit {
@@ -57,16 +63,13 @@ func (lc *LatencyChecker) doGetTokenRequest() (int, error) {
 	if lc.GetAPIKey() == "NOT_SET" {
 		return -1, errors.New(" DDOSIFY_X_API_KEY env var not set")
 	}
-	req, err := http.NewRequest(http.MethodGet, DDOSIFY_TOKEN_API_URL, nil)
+	req, err := http.NewRequest(http.MethodGet, lc.GetServiceAPITokenURL(), nil)
 	if err != nil {
 		panic(err)
 	}
 
 	req.Header.Add("X-API-KEY", lc.GetAPIKey())
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return -1, err
-	}
+	res, _ := http.DefaultClient.Do(req)
 
 	bodyResponse := &tokenAPIResponse{}
 	derr := json.NewDecoder(res.Body).Decode(bodyResponse)
@@ -95,7 +98,7 @@ func (lc *LatencyChecker) doPostLatencyCheckRequest() (map[string]interface{}, e
 
 	body := bytes.NewReader(reqBodyJson)
 
-	req, err := http.NewRequest(http.MethodPost, DDOSIFY_LATENCY_API_URL, body)
+	req, err := http.NewRequest(http.MethodPost, lc.GetServiceAPIURL(), body)
 	if err != nil {
 		panic(err)
 	}
@@ -103,11 +106,7 @@ func (lc *LatencyChecker) doPostLatencyCheckRequest() (map[string]interface{}, e
 	req.Header.Add("Content-Type", CONTENT_TYPE_REQ)
 	req.Header.Add("X-API-KEY", lc.GetAPIKey())
 
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Println("error request: ", err.Error())
-		return nil, err
-	}
+	res, _ := http.DefaultClient.Do(req)
 	defer res.Body.Close()
 
 	derr := json.NewDecoder(res.Body).Decode(&responseLatency)

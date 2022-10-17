@@ -17,6 +17,8 @@ type LatencyChecker struct {
 	APIKey                string   //This is the API Key to authenticate to ddosify (we get this from an ENV var)
 	ContentType           string   //This is the content type used to interact with the ddosify API
 	OutputLocationsNumber int      //This is the number of locations to be outputed
+	ServiceAPITokenURL    string
+	ServiceAPIURL         string
 }
 
 type LatencyCheckerOutput struct {
@@ -48,7 +50,17 @@ func NewLatencyChecker(targetURL string, runs int, waitInterval int, locations [
 		APIKey:                getEnv("DDOSIFY_X_API_KEY", "NOT_SET"),
 		ContentType:           CONTENT_TYPE_REQ,
 		OutputLocationsNumber: outputLocationsNumber,
+		ServiceAPITokenURL:    DDOSIFY_TOKEN_API_URL,
+		ServiceAPIURL:         DDOSIFY_LATENCY_API_URL,
 	}
+}
+
+//GetServiceAPITokenURLis the get method to retrieve the ServiceAPITokenURL attribute
+func (lc *LatencyChecker) GetServiceAPITokenURL() string {
+	return lc.ServiceAPITokenURL
+} //GetServiceAPIURL is the get method to retrieve the ServiceAPIURL attribute
+func (lc *LatencyChecker) GetServiceAPIURL() string {
+	return lc.ServiceAPIURL
 }
 
 //GetTargetURL is the get method to retrieve the TargetURL attribute
@@ -104,4 +116,14 @@ func (lc *LatencyChecker) SetLocations(locations []string) {
 //SetOutputLocationsNumber is the setter method to set the Runs attribute
 func (lc *LatencyChecker) SetOutputLocationsNumber(outputLocationsNumber int) {
 	lc.OutputLocationsNumber = outputLocationsNumber
+}
+
+//SetServiceAPITokenURL is the setter method to set the Runs attribute
+func (lc *LatencyChecker) SetServiceAPITokenURL(URL string) {
+	lc.ServiceAPITokenURL = URL
+}
+
+// SetServiceAPIURL is the setter method to set the Runs attribute
+func (lc *LatencyChecker) SetServiceAPIURL(URL string) {
+	lc.ServiceAPIURL = URL
 }

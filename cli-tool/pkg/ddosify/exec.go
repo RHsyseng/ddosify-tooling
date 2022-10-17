@@ -48,6 +48,7 @@ func (lc *LatencyChecker) RunCommandExec() (LatencyCheckerOutputList, error) {
 		responseLatencyCheck, err := lc.doPostLatencyCheckRequest()
 		if err != nil {
 			log.Println("Error doing Latency Check Request", err.Error())
+			return LatencyCheckerOutputList{}, err
 		}
 
 		for key, val := range responseLatencyCheck {
