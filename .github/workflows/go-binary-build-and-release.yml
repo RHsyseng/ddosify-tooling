@@ -20,11 +20,6 @@ jobs:
       working-directory: ./cli-tool/
       run: go mod tidy
 
-    - name: Run Linter
-      uses: golangci/golangci-lint-action@v2
-      with:
-        working-directory: ./cli-tool/
-
     - name: Run Unit Tests
       working-directory: ./cli-tool/
       run: GOOS=linux GOARCH=amd64 go test -race -cover -v
