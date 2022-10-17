@@ -23,18 +23,18 @@ jobs:
     - name: Run Unit Tests
       working-directory: ./cli-tool/
       run: |
-        GOOS=linux GOARCH=amd64 go test -race -cover  -v ./... -covermode=count -coverprofile=coverage.out
-        go tool cover -func=coverage.out -o=coverage.out
+        GOOS=linux GOARCH=amd64 go test -cover  -v ./... -covermode=count -coverprofile=coverage.out
+        go tool cover -func=coverage.out -o=/tmp/coverage.out
 
     - name: Go Coverage Badge  # Pass the `coverage.out` output to this action
-        uses: tj-actions/coverage-badge-go@v2
-        with:
-          filename: coverage.out
+      uses: tj-actions/coverage-badge-go@v2
+      with:
+        filename: /tmp/coverage.out
     - name: Verify Changed files
-        uses: tj-actions/verify-changed-files@v9.1
-        id: verify-changed-files
-        with:
-          files: README.md
+      uses: tj-actions/verify-changed-files@v9.1
+      id: verify-changed-files
+      with:
+        files: README.md
 
     - name: Commit changes
       if: steps.verify-changed-files.outputs.files_changed == 'true'
