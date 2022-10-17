@@ -1,4 +1,5 @@
 # Ddosify latency tooling
+![Coverage](https://img.shields.io/badge/Coverage-86.3%25-brightgreen)
 
 Currently, ddosify exposes an API that can be used to test latencies, the documentation can be found [here](https://docs.ddosify.com/cloud/api/latency-testing-api). It has some limitations:
 
