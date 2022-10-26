@@ -17,11 +17,11 @@ jobs:
         go-version: 1.17
 
     - name: Get Dependencies
-      working-directory: ./cli-tool/
+      working-directory: ./tooling/
       run: go mod tidy
 
     - name: Run Unit Tests
-      working-directory: ./cli-tool/
+      working-directory: ./tooling/
       run: |
         GOOS=linux GOARCH=amd64 go test -cover  -v ./... -covermode=count -coverprofile=coverage.out
         go tool cover -func=coverage.out -o=/tmp/coverage.out
@@ -52,7 +52,7 @@ jobs:
         branch: ${{ github.head_ref }}
 
     - name: Run Build
-      working-directory: ./cli-tool/
+      working-directory: ./tooling/
       run: |
         echo "Create output dir"
         mkdir -p ./out/
@@ -71,7 +71,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: ddosify-latencies-binaries
-        path: ./cli-tool/out/
+        path: ./tooling/out/
 
   release:
     name: Creates a new release with the resulting binaries

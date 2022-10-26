@@ -1,4 +1,4 @@
-module github.com/rhsyseng/ddosify-tooling/cli-tool
+module github.com/rhsyseng/ddosify-tooling/tooling
 
 go 1.17
 
