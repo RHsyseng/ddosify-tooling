@@ -22,7 +22,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -91,8 +90,7 @@ func (in *LatencyCheckResult) DeepCopyInto(out *LatencyCheckResult) {
 	*out = *in
 	if in.Result != nil {
 		in, out := &in.Result, &out.Result
-		*out = new(ddosify.LatencyCheckerOutputList)
-		(*in).DeepCopyInto(*out)
+		*out = (*in).DeepCopy()
 	}
 }
 
