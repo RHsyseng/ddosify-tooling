@@ -1,4 +1,4 @@
-module github.com/rhsyseng/ddosify-tooling/tooling
+module github.com/RHsyseng/ddosify-tooling/tooling
 
 go 1.17
 
