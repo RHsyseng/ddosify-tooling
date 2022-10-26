@@ -3,7 +3,7 @@ package cmd
 import (
 	"errors"
 
-	"github.com/rhsyseng/ddosify-tooling/cli-tool/pkg/ddosify"
+	"github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
 	"github.com/spf13/cobra"
 )
 

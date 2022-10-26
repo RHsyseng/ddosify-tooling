@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
 	"github.com/TwiN/go-color"
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/rhsyseng/ddosify-tooling/cli-tool/pkg/ddosify"
 	"gopkg.in/yaml.v2"
 )
 

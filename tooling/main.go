@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
+	"github.com/RHsyseng/ddosify-tooling/tooling/cmd"
 	"github.com/TwiN/go-color"
-	"github.com/rhsyseng/ddosify-tooling/cli-tool/cmd"
 
 	"os"
 
