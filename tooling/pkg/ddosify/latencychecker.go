@@ -22,12 +22,34 @@ type LatencyChecker struct {
 }
 
 type LatencyCheckerOutput struct {
-	Location   string  `json:"location",yaml:"location"`
-	AvgLatency float64 `json:"avgLatency",yaml:"avgLatency"`
+	Location   string  `json:"location", yaml:"location"`
+	AvgLatency float64 `json:"avgLatency", yaml:"avgLatency"`
 }
 
 type LatencyCheckerOutputList struct {
-	Result []LatencyCheckerOutput `json:"result",yaml:"result"`
+	Result []LatencyCheckerOutput `json:"result", yaml:"result"`
+}
+
+func (in *LatencyCheckerOutputList) DeepCopyInto(out *LatencyCheckerOutputList) {
+	*out = *in
+
+	if in.Result != nil {
+		in, out := &in.Result, &out.Result
+		*out = make([]LatencyCheckerOutput, len(*in))
+		for i := range *in {
+			(*out)[i] = (*in)[i]
+
+		}
+	}
+}
+
+func (in *LatencyCheckerOutputList) DeepCopy() *LatencyCheckerOutputList {
+	if in == nil {
+		return nil
+	}
+	out := new(LatencyCheckerOutputList)
+	in.DeepCopyInto(out)
+	return out
 }
 
 type tokenAPIResponse struct {
