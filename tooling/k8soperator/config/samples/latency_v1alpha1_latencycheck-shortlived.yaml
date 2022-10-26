@@ -1,0 +1,15 @@
+apiVersion: latency.redhat.com/v1alpha1
+kind: LatencyCheck
+metadata:
+  generateName: lc-shortlived-
+spec:
+  targetURL: "https://google.com"
+  numberOfRuns: 2
+  waitInterval: "10s"
+  locations:
+  - "NA.*"
+  outputLocationsNumber: 3
+  scheduled: false
+  provider:
+    providerName: "ddosify"
+    apiKey: "test"

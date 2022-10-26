@@ -1,0 +1,20 @@
+# permissions for end users to view latencychecks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: latencycheck-viewer-role
+rules:
+- apiGroups:
+  - latency.redhat.com
+  resources:
+  - latencychecks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - latency.redhat.com
+  resources:
+  - latencychecks/status
+  verbs:
+  - get

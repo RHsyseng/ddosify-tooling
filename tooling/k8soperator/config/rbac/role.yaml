@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - latency.redhat.com
+  resources:
+  - latencychecks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - latency.redhat.com
+  resources:
+  - latencychecks/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - latency.redhat.com
+  resources:
+  - latencychecks/status
+  verbs:
+  - get
+  - patch
+  - update
