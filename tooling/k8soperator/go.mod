@@ -3,7 +3,7 @@ module github.com/RHsyseng/ddosify-tooling
 go 1.18
 
 require (
-
+	github.com/RHsyseng/ddosify-tooling/tooling v0.0.0-20221026160332-71edb6c166e4
 	github.com/go-logr/logr v1.2.3
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.22.1

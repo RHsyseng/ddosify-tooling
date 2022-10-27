@@ -1,6 +1,6 @@
 module github.com/RHsyseng/ddosify-tooling/tooling
 
-go 1.18
+go 1.17
 
 require (
 	github.com/TwiN/go-color v1.2.0
