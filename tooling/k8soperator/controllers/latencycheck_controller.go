@@ -18,11 +18,16 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	latencyv1alpha1 "github.com/RHsyseng/ddosify-tooling/api/v1alpha1"
 	"github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -110,8 +115,33 @@ func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	log.Info("Add or Update")
 	// This instance is an infinite run
 	if instance.Spec.Scheduled {
-		r.runLatencyChecker(log, instance)
+		output, err := r.runLatencyChecker(log, instance)
+		if err != nil {
+			log.Info("Error running LatencyChecker")
+			// Update status
+			instance.Status.Results = latencyv1alpha1.LatencyCheckResult{
+				ExecutionTime: time.Now().Format(time.RFC3339),
+				Result: &ddosify.LatencyCheckerOutputList{
+					Result: []ddosify.LatencyCheckerOutput{},
+				},
+			}
+			instance.Status.LastExecution = time.Now().Format(time.RFC3339)
+			switch {
+			case errors.IsBadRequest(err):
+				meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionIntervalTimeValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionIntervalTimeValid, Message: "waitInterval is not valid"})
+				break
+			case errors.IsInternalError(err):
+				meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionAPITokenValid, Status: metav1.ConditionTrue, Reason: latencyv1alpha1.ConditionAPITokenValid, Message: "API Token is not valid"})
+				break
+			}
+			//set conditions
+			r.updateLatencyCheckStatus(instance, log)
+			// End reconcile and do not requeue
+			return ctrl.Result{}, nil
+		}
+
 		log.Info("Long-lived run")
+		fmt.Println(output)
 		return ctrl.Result{RequeueAfter: 60 * time.Second, Requeue: true}, nil
 	}
 	r.runLatencyChecker(log, instance)
@@ -121,11 +151,16 @@ func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 func (r *LatencyCheckReconciler) runLatencyChecker(log logr.Logger, cr *latencyv1alpha1.LatencyCheck) (ddosify.LatencyCheckerOutputList, error) {
 	log.Info("About to run latency check")
+	if !ddosify.ValidateIntervalTime(cr.Spec.WaitInterval) {
+		log.Info("Invalid wait interval")
+		return ddosify.LatencyCheckerOutputList{}, errors.NewBadRequest("Invalid wait interval")
+	}
 
-	lc := ddosify.NewLatencyChecker(cr.Spec.TargetURL, cr.Spec.NumberOfRuns, cr.Spec.WaitInterval, cr.Spec.Locations, cr.Spec.OutputLocationsNumber)
+	lc := ddosify.NewLatencyChecker(cr.Spec.Provider.APIKey, cr.Spec.TargetURL, cr.Spec.NumberOfRuns, 10, cr.Spec.Locations, cr.Spec.OutputLocationsNumber)
 	res, err := lc.RunCommandExec()
 	if err != nil {
-		return ddosify.LatencyCheckerOutputList{}, err
+
+		return ddosify.LatencyCheckerOutputList{}, errors.NewInternalError(err)
 	}
 	return res, nil
 }
@@ -142,6 +177,33 @@ func (r *LatencyCheckReconciler) addFinalizer(log logr.Logger, cr *latencyv1alph
 		return err
 	}
 	return nil
+}
+
+// updateLatencyCheckStatus updates the Status of a given CR
+func (r *LatencyCheckReconciler) updateLatencyCheckStatus(cr *latencyv1alpha1.LatencyCheck, log logr.Logger) (*latencyv1alpha1.LatencyCheck, error) {
+	latencyCheck := &latencyv1alpha1.LatencyCheck{}
+	err := r.Get(context.Background(), types.NamespacedName{Name: cr.Name, Namespace: cr.Namespace}, latencyCheck)
+	if err != nil {
+		return latencyCheck, err
+	}
+
+	if !reflect.DeepEqual(cr.Status, latencyCheck.Status) {
+		log.Info("Updating LatencyCheck Status.")
+		// We need to update the status
+		err = r.Status().Update(context.Background(), cr)
+		if err != nil {
+			log.Info(err.Error())
+			return cr, err
+		}
+		updatedlatencyCheck := &latencyv1alpha1.LatencyCheck{}
+		err = r.Get(context.Background(), types.NamespacedName{Name: cr.Name, Namespace: cr.Namespace}, updatedlatencyCheck)
+		if err != nil {
+			return cr, err
+		}
+		cr = updatedlatencyCheck.DeepCopy()
+	}
+	return cr, nil
+
 }
 
 // finalizeLatencyCheck runs required tasks before deleting the objects owned by the CR

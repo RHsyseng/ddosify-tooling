@@ -60,7 +60,7 @@ spec:
               targetURL:
                 type: string
               waitInterval:
-                type: integer
+                type: string
             required:
             - locations
             - numberOfRuns

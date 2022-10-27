@@ -13,8 +13,8 @@ import (
 	"strconv"
 )
 
-//getEnv returns the value for a given Env Var
-func getEnv(varName string, defaultValue string) string {
+//GetEnv returns the value for a given Env Var
+func GetEnv(varName string, defaultValue string) string {
 	if varValue, ok := os.LookupEnv(varName); ok {
 		return varValue
 	}

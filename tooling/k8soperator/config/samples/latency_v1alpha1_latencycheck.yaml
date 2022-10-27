@@ -13,4 +13,4 @@ spec:
   scheduleDefinition: "1h"
   provider:
     providerName: "ddosify"
-    apiKey: "test"
+    apiKey: "3b50ec0f-9073-4c93-8bc2-ae7608df1b1e"

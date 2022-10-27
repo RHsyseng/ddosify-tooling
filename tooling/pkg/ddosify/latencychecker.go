@@ -63,13 +63,13 @@ type LatencyAPIRequest struct {
 }
 
 //NewLatencyChecker is the object constructor
-func NewLatencyChecker(targetURL string, runs int, waitInterval int, locations []string, outputLocationsNumber int) *LatencyChecker {
+func NewLatencyChecker(apiKey string, targetURL string, runs int, waitInterval int, locations []string, outputLocationsNumber int) *LatencyChecker {
 	return &LatencyChecker{
 		TargetUrl:             targetURL,
 		Runs:                  runs,
 		WaitInterval:          waitInterval,
 		Locations:             locations,
-		APIKey:                getEnv("DDOSIFY_X_API_KEY", "NOT_SET"),
+		APIKey:                apiKey,
 		ContentType:           CONTENT_TYPE_REQ,
 		OutputLocationsNumber: outputLocationsNumber,
 		ServiceAPITokenURL:    DDOSIFY_TOKEN_API_URL,

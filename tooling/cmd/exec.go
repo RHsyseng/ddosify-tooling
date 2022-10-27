@@ -41,7 +41,7 @@ func NewExecCommand() *cobra.Command {
 			}
 			// Get waitIntervalInSeconds
 			waitIntervalSeconds := ddosify.IntervalTimeToSeconds(waitInterval)
-			lc := ddosify.NewLatencyChecker(targetURL, numberOfRuns, waitIntervalSeconds, locations, outputLocationsNumber)
+			lc := ddosify.NewLatencyChecker(ddosify.GetEnv("DDOSIFY_X_API_KEY", "NOT_SET"), targetURL, numberOfRuns, waitIntervalSeconds, locations, outputLocationsNumber)
 			res, err := lc.RunCommandExec()
 			switch {
 			case outputFormat == "yaml":

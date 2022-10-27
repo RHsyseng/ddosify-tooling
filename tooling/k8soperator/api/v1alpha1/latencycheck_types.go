@@ -22,8 +22,10 @@ import (
 )
 
 const (
-	ConditionTypeReady                 = "Ready"
-	ConditionTypeLatencyCheckerRunning = false
+	ConditionTypeReady                 string = "Ready"
+	ConditionTypeLatencyCheckerRunning string = "LatencyCheckerRunning"
+	ConditionIntervalTimeValid         string = "IntervalTimeValid"
+	ConditionAPITokenValid             string = "APITokenValid"
 )
 
 type LatencyCheckerProvider struct {
@@ -35,7 +37,7 @@ type LatencyCheckerProvider struct {
 type LatencyCheckSpec struct {
 	TargetURL             string                 `json:"targetURL"`
 	NumberOfRuns          int                    `json:"numberOfRuns"`
-	WaitInterval          int                    `json:"waitInterval"`
+	WaitInterval          string                 `json:"waitInterval"`
 	Locations             []string               `json:"locations"`
 	OutputLocationsNumber int                    `json:"outputLocationsNumber"`
 	Provider              LatencyCheckerProvider `json:"provider"`
