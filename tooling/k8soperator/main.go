@@ -32,8 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	latencyv1alpha1 "github.com/RHsyseng/ddosify-tooling/api/v1alpha1"
 	"github.com/RHsyseng/ddosify-tooling/controllers"
+	latencyv1alpha1 "github.com/RHsyseng/ddosify-tooling/tooling/k8soperator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 

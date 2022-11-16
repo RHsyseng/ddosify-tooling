@@ -18,7 +18,7 @@ package controllers
 
 import (
 	"context"
-	latencyv1alpha1 "github.com/RHsyseng/ddosify-tooling/api/v1alpha1"
+	latencyv1alpha1 "github.com/RHsyseng/ddosify-tooling/tooling/k8soperator/api/v1alpha1"
 	"github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"

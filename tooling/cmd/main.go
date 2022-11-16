@@ -1,10 +1,8 @@
 package main
 
 import (
-	"github.com/RHsyseng/ddosify-tooling/tooling/cli"
+	"github.com/RHsyseng/ddosify-tooling/tooling/cmd/cli"
 	"log"
-
-	"github.com/TwiN/go-color"
 
 	"os"
 
