@@ -7,6 +7,8 @@ require (
 	github.com/adhocore/gronx v1.1.2
 	github.com/go-logr/logr v1.2.3
 	github.com/jedib0t/go-pretty/v6 v6.4.2
+	github.com/onsi/ginkgo v1.16.5
+	github.com/onsi/gomega v1.20.1
 	github.com/spf13/cobra v1.6.1
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.25.4
@@ -53,7 +55,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
