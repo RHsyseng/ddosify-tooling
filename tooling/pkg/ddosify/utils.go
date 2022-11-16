@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/gorhill/cronexpr"
+	"github.com/adhocore/gronx"
 	"log"
 	"net/http"
 	"net/url"
@@ -12,7 +12,6 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
-	"time"
 )
 
 //GetEnv returns the value for a given Env Var
@@ -36,9 +35,10 @@ func ValidateIntervalTime(interval string) bool {
 }
 
 func ValidateCronTime(cronTime string) bool {
-	log.Println("xxxxxxcrontime: ", cronTime)
+	log.Println("[INFO] crontime to be validated: ", cronTime)
+	gron := gronx.New()
 	if cronTime != "" {
-		return cronexpr.MustParse(cronTime).Next(time.Now()).IsZero()
+		return gron.IsValid(cronTime)
 	}
 	return false
 }
