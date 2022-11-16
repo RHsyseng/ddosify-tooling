@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/RHsyseng/ddosify-tooling/tooling/cmd/cli"
+	color "github.com/TwiN/go-color"
 	"log"
-
 	"os"
 
 	"github.com/spf13/cobra"

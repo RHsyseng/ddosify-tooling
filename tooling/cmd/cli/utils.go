@@ -3,10 +3,11 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-
 	"github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
+	color "github.com/TwiN/go-color"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"gopkg.in/yaml.v2"
+	"os"
 )
 
 func writeOutputTable(lcol ddosify.LatencyCheckerOutputList) {
