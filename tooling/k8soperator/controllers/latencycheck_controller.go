@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	latencyv1alpha1 "github.com/RHsyseng/ddosify-tooling/api/v1alpha1"
 	"github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
 	"github.com/go-logr/logr"
@@ -108,6 +107,7 @@ func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		if err := r.addFinalizer(log, instance); err != nil {
 			return ctrl.Result{}, err
 		}
+		return ctrl.Result{}, nil
 	}
 	// Run LatencyChecks
 	// Create LatencyCheckerObject
@@ -117,36 +117,57 @@ func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if instance.Spec.Scheduled {
 		output, err := r.runLatencyChecker(log, instance)
 		if err != nil {
-			log.Info("Error running LatencyChecker")
-			// Update status
-			instance.Status.Results = latencyv1alpha1.LatencyCheckResult{
-				ExecutionTime: time.Now().Format(time.RFC3339),
-				Result: &ddosify.LatencyCheckerOutputList{
-					Result: []ddosify.LatencyCheckerOutput{},
-				},
-			}
-			instance.Status.LastExecution = time.Now().Format(time.RFC3339)
-			switch {
-			case errors.IsBadRequest(err):
-				meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionIntervalTimeValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionIntervalTimeValid, Message: "waitInterval is not valid"})
-				break
-			case errors.IsInternalError(err):
-				meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionAPITokenValid, Status: metav1.ConditionTrue, Reason: latencyv1alpha1.ConditionAPITokenValid, Message: "API Token is not valid"})
-				break
-			}
-			//set conditions
+			r.prepareLatencyCheckerStatus(log, err, instance, &output)
 			r.updateLatencyCheckStatus(instance, log)
 			// End reconcile and do not requeue
 			return ctrl.Result{}, nil
 		}
 
 		log.Info("Long-lived run")
-		fmt.Println(output)
-		return ctrl.Result{RequeueAfter: 60 * time.Second, Requeue: true}, nil
+		r.prepareLatencyCheckerStatus(log, err, instance, &output)
+		r.updateLatencyCheckStatus(instance, log)
+		return ctrl.Result{RequeueAfter: 10 * time.Second, Requeue: true}, nil
+	} else if instance.Status.LastExecution == "" {
+		output, err := r.runLatencyChecker(log, instance)
+		log.Info("Short-lived run")
+		r.prepareLatencyCheckerStatus(log, err, instance, &output)
+		r.updateLatencyCheckStatus(instance, log)
+		return ctrl.Result{}, nil
+	} else {
+		log.Info("Short-lived run already executed")
+		return ctrl.Result{}, nil
 	}
-	r.runLatencyChecker(log, instance)
-	log.Info("Short-lived run")
-	return ctrl.Result{}, nil
+}
+
+func (r *LatencyCheckReconciler) prepareLatencyCheckerStatus(log logr.Logger, errRun error, instance *latencyv1alpha1.LatencyCheck, result *ddosify.LatencyCheckerOutputList) {
+	instance.Status.Results = latencyv1alpha1.LatencyCheckResult{
+		ExecutionTime: time.Now().Format(time.RFC3339),
+		Result:        result,
+	}
+	instance.Status.LastExecution = time.Now().Format(time.RFC3339)
+	if errRun != nil {
+		log.Info("Error running LatencyChecker")
+		// Update status
+		instance.Status.Results = latencyv1alpha1.LatencyCheckResult{
+			ExecutionTime: time.Now().Format(time.RFC3339),
+			Result: &ddosify.LatencyCheckerOutputList{
+				Result: []ddosify.LatencyCheckerOutput{},
+			},
+		}
+		instance.Status.LastExecution = time.Now().Format(time.RFC3339)
+		switch {
+		case errors.IsBadRequest(errRun):
+			meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionIntervalTimeValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionIntervalTimeValid, Message: "waitInterval is not valid"})
+			break
+		case errors.IsInternalError(errRun):
+			meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionAPITokenValid, Status: metav1.ConditionTrue, Reason: latencyv1alpha1.ConditionAPITokenValid, Message: "API Token is not valid"})
+			break
+		}
+		//set conditions
+		meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionIntervalTimeValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionIntervalTimeValid, Message: "waitInterval is not valid"})
+		return
+	}
+	meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionIntervalTimeValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionIntervalTimeValid, Message: "waitInterval is not valid"})
 }
 
 func (r *LatencyCheckReconciler) runLatencyChecker(log logr.Logger, cr *latencyv1alpha1.LatencyCheck) (ddosify.LatencyCheckerOutputList, error) {
@@ -156,6 +177,8 @@ func (r *LatencyCheckReconciler) runLatencyChecker(log logr.Logger, cr *latencyv
 		return ddosify.LatencyCheckerOutputList{}, errors.NewBadRequest("Invalid wait interval")
 	}
 
+	if !ddosify.ValidateCronTime(cr.Spec.ScheduleDefinition) {
+	}
 	lc := ddosify.NewLatencyChecker(cr.Spec.Provider.APIKey, cr.Spec.TargetURL, cr.Spec.NumberOfRuns, 10, cr.Spec.Locations, cr.Spec.OutputLocationsNumber)
 	res, err := lc.RunCommandExec()
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"time"
 )
 
 //GetEnv returns the value for a given Env Var
@@ -31,6 +32,10 @@ func ValidateIntervalTime(interval string) bool {
 	r := regexp.MustCompile(`^(\d*)(s|m|h)`)
 	matched := r.MatchString(interval)
 	return matched
+}
+
+func ValidateCronTime(cronTime string) bool {
+	return cronexpr.MustParse(cronTime).Next(time.Now()).IsZero()
 }
 
 func IntervalTimeToSeconds(interval string) int {

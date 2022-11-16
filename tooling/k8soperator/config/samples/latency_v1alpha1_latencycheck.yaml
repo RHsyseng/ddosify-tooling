@@ -1,7 +1,7 @@
 apiVersion: latency.redhat.com/v1alpha1
 kind: LatencyCheck
 metadata:
-  generateName: lc-longlived-
+  name: lc-longlived
 spec:
   targetURL: "https://google.com"
   numberOfRuns: 2
@@ -10,7 +10,7 @@ spec:
   - "NA.*"
   outputLocationsNumber: 3
   scheduled: true
-  scheduleDefinition: "1h"
+  scheduleDefinition: "1qh"
   provider:
     providerName: "ddosify"
     apiKey: "3b50ec0f-9073-4c93-8bc2-ae7608df1b1e"
