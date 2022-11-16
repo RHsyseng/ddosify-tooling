@@ -22,10 +22,13 @@ import (
 )
 
 const (
-	ConditionTypeReady                 string = "Ready"
-	ConditionTypeLatencyCheckerRunning string = "LatencyCheckerRunning"
-	ConditionIntervalTimeValid         string = "IntervalTimeValid"
-	ConditionAPITokenValid             string = "APITokenValid"
+	ConditionTypeReady                     string = "Ready"
+	ConditionTypeLatencyCheckerRunning     string = "LatencyCheckerRunning"
+	ConditionIntervalTimeValid             string = "IntervalTimeValid"
+	ConditionIntervalTimeNotValidMsg       string = "waitInterval value is not valid"
+	ConditionScheduleDefinitionValid       string = "ScheduleDefinitionValid"
+	ConditionScheduleDefinitionNotValidMsg string = "scheduleDefinition value is not valid"
+	ConditionAPITokenValid                 string = "APITokenValid"
 )
 
 type LatencyCheckerProvider struct {
