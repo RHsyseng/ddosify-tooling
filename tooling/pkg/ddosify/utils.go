@@ -36,7 +36,11 @@ func ValidateIntervalTime(interval string) bool {
 }
 
 func ValidateCronTime(cronTime string) bool {
-	return cronexpr.MustParse(cronTime).Next(time.Now()).IsZero()
+	log.Println("xxxxxxcrontime: ", cronTime)
+	if cronTime != "" {
+		return cronexpr.MustParse(cronTime).Next(time.Now()).IsZero()
+	}
+	return false
 }
 
 func IntervalTimeToSeconds(interval string) int {

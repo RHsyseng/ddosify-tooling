@@ -156,8 +156,8 @@ func (r *LatencyCheckReconciler) prepareLatencyCheckerStatus(log logr.Logger, er
 		}
 		instance.Status.LastExecution = time.Now().Format(time.RFC3339)
 		switch {
-		case errors.IsBadRequest(errRun):
-			meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionIntervalTimeValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionIntervalTimeValid, Message: "waitInterval is not valid"})
+		case errors.IsBadRequest(errRun) && errRun.Error() == latencyv1alpha1.ConditionScheduleDefinitionValid:
+			meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: errRun.Error(), Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionScheduleDefinitionValid, Message: latencyv1alpha1.ConditionScheduleDefinitionNotValidMsg})
 			break
 		case errors.IsInternalError(errRun):
 			meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionAPITokenValid, Status: metav1.ConditionTrue, Reason: latencyv1alpha1.ConditionAPITokenValid, Message: "API Token is not valid"})
@@ -174,11 +174,14 @@ func (r *LatencyCheckReconciler) runLatencyChecker(log logr.Logger, cr *latencyv
 	log.Info("About to run latency check")
 	if !ddosify.ValidateIntervalTime(cr.Spec.WaitInterval) {
 		log.Info("Invalid wait interval")
-		return ddosify.LatencyCheckerOutputList{}, errors.NewBadRequest("Invalid wait interval")
+		return ddosify.LatencyCheckerOutputList{}, errors.NewBadRequest(latencyv1alpha1.ConditionIntervalTimeValid)
 	}
 
 	if !ddosify.ValidateCronTime(cr.Spec.ScheduleDefinition) {
+		log.Info("Invalid cron time")
+		return ddosify.LatencyCheckerOutputList{}, errors.NewBadRequest(latencyv1alpha1.ConditionScheduleDefinitionValid)
 	}
+
 	lc := ddosify.NewLatencyChecker(cr.Spec.Provider.APIKey, cr.Spec.TargetURL, cr.Spec.NumberOfRuns, 10, cr.Spec.Locations, cr.Spec.OutputLocationsNumber)
 	res, err := lc.RunCommandExec()
 	if err != nil {
