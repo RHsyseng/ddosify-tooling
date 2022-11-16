@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/RHsyseng/ddosify-tooling/tooling/cli"
 	"log"
 
-	"github.com/RHsyseng/ddosify-tooling/tooling/cmd"
 	"github.com/TwiN/go-color"
 
 	"os"
@@ -29,7 +29,7 @@ func newCommand() *cobra.Command {
 		},
 	}
 
-	c.AddCommand(cmd.NewExecCommand())
+	c.AddCommand(cli.NewExecCommand())
 
 	return c
 }
