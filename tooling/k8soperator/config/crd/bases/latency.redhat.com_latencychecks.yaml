@@ -66,6 +66,7 @@ spec:
             - numberOfRuns
             - outputLocationsNumber
             - provider
+            - scheduled
             - targetURL
             - waitInterval
             type: object
@@ -141,6 +142,8 @@ spec:
                   type: object
                 type: array
               lastExecution:
+                type: string
+              nextExecution:
                 type: string
               results:
                 items:

@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"time"
 )
 
 //GetEnv returns the value for a given Env Var
@@ -41,6 +42,28 @@ func ValidateCronTime(cronTime string) bool {
 		return gron.IsValid(cronTime)
 	}
 	return false
+}
+
+func GetNextTimeCronTime(cronTime string) int64 {
+	// We get the time of the next execution based on the scheduled
+	nextTime, err := gronx.NextTick(cronTime, false)
+	if err != nil {
+		log.Println("[INFO] CronTime format is not valid or not scheduled cr passed: ", err)
+		return -1
+	}
+	// We convert times to epoch and get the seconds remaining to the nextTime
+	duration := nextTime.Unix() - time.Now().Unix()
+	return duration
+
+	/*	// Get current time in RFC3339 format
+		currentTime := time.Now()
+		currentTimeUnix := time.Now().Unix()
+		currentTimeRFC3339 := currentTime.Format(time.RFC3339)
+		// Transform creationTimestap to Unix time
+		t, err := time.Parse(time.RFC3339, subCreationTimestamp)
+		subCreationTimestampUnix := t.Unix()
+		// Check how much time passed since the sub was created (in hours)
+		timeSinceCreated := (currentTimeUnix - subCreationTimestampUnix) / 60 / 60*/
 }
 
 func IntervalTimeToSeconds(interval string) int {

@@ -29,6 +29,7 @@ import (
 	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -44,7 +45,10 @@ type LatencyCheckReconciler struct {
 }
 
 // Finalizer for our objects
-const latencyCheckerFinalizer = "finalizer.latency.redhat.com"
+const (
+	latencyCheckerFinalizer = "finalizer.latency.redhat.com"
+	concurrentReconciles    = 10
+)
 
 //+kubebuilder:rbac:groups=latency.redhat.com,resources=latencychecks,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=latency.redhat.com,resources=latencychecks/status,verbs=get;update;patch
@@ -59,6 +63,10 @@ const latencyCheckerFinalizer = "finalizer.latency.redhat.com"
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
+
+// TODO:
+// - When latencycheck run fails we should output that to a condition/status
+
 func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("Reconcile loop started")
@@ -106,39 +114,36 @@ func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Add Finalizers to the CR
 	if !contains(instance.GetFinalizers(), latencyCheckerFinalizer) {
-		if err := r.addFinalizer(log, instance); err != nil {
+		if err := r.addFinalizer(log, instance, ctx); err != nil {
+			log.Info("Error adding finalizer")
 			return ctrl.Result{}, err
 		}
+		// We need to requeue after adding the finalizer. Keep in mind that generation shouldn't change so no reconcile will happen next
+		// this may not be true if the API is mutating the object after creation (example omitempty boolean fields set to false will be deleted by the API).
 		return ctrl.Result{Requeue: true}, nil
 	}
-	// Run LatencyChecks
-	// Create LatencyCheckerObject
 
-	log.Info("Add or Update")
+	// Run LatencyChecks
+
 	// This instance is an infinite run
-	switch {
-	case instance.Spec.Scheduled:
+	if instance.Spec.Scheduled {
+		// long run
 		output, err := r.runLatencyChecker(log, instance)
-		if err != nil {
-			r.prepareLatencyCheckerStatus(log, err, instance, &output)
-			r.updateLatencyCheckStatus(instance, log)
-			// End reconcile and do not requeue
-			return ctrl.Result{}, nil
-		}
 		log.Info("Long-lived run")
+		// If error, the status will be empty, and we will requeue in case next time it goes well
 		r.prepareLatencyCheckerStatus(log, err, instance, &output)
 		r.updateLatencyCheckStatus(instance, log)
-		return ctrl.Result{RequeueAfter: 60 * time.Second, Requeue: true}, nil
-	case instance.Status.LastExecution == "":
-		output, err := r.runLatencyChecker(log, instance)
-		log.Info("Short-lived run")
-		r.prepareLatencyCheckerStatus(log, err, instance, &output)
-		r.updateLatencyCheckStatus(instance, log)
-		return ctrl.Result{}, nil
-	default:
-		log.Info("Short-lived run already executed")
-		return ctrl.Result{}, nil
+		return ctrl.Result{RequeueAfter: time.Duration(ddosify.GetNextTimeCronTime(instance.Spec.ScheduleDefinition)) * time.Second, Requeue: true}, nil
 	}
+
+	output, err := r.runLatencyChecker(log, instance)
+	log.Info("Short-lived run")
+	// If error, the status will be empty
+	r.prepareLatencyCheckerStatus(log, err, instance, &output)
+	r.updateLatencyCheckStatus(instance, log)
+
+	return ctrl.Result{}, nil
+
 }
 
 func (r *LatencyCheckReconciler) prepareLatencyCheckerStatus(log logr.Logger, errRun error, instance *latencyv1alpha1.LatencyCheck, result *ddosify.LatencyCheckerOutputList) {
@@ -150,6 +155,9 @@ func (r *LatencyCheckReconciler) prepareLatencyCheckerStatus(log logr.Logger, er
 	// We need to concatenate existing results to the new result
 	instance.Status.Results = append(instance.Status.Results, newResult)
 	instance.Status.LastExecution = time.Now().Format(time.RFC3339)
+	if instance.Spec.Scheduled {
+		instance.Status.NextExecution = time.Now().Add(time.Duration(ddosify.GetNextTimeCronTime(instance.Spec.ScheduleDefinition)) * time.Second).Format(time.RFC3339)
+	}
 	if errRun != nil {
 		log.Info("Error running LatencyChecker")
 		// Update status
@@ -160,6 +168,7 @@ func (r *LatencyCheckReconciler) prepareLatencyCheckerStatus(log logr.Logger, er
 			},
 		}
 		instance.Status.LastExecution = time.Now().Format(time.RFC3339)
+
 		switch {
 		case errors.IsBadRequest(errRun) && errRun.Error() == latencyv1alpha1.ConditionScheduleDefinitionValid:
 			meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionScheduleDefinitionValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionScheduleDefinitionValid, Message: latencyv1alpha1.ConditionScheduleDefinitionNotValidMsg})
@@ -190,7 +199,7 @@ func (r *LatencyCheckReconciler) runLatencyChecker(log logr.Logger, cr *latencyv
 		return ddosify.LatencyCheckerOutputList{}, errors.NewBadRequest(latencyv1alpha1.ConditionScheduleDefinitionValid)
 	}
 
-	lc := ddosify.NewLatencyChecker(cr.Spec.Provider.APIKey, cr.Spec.TargetURL, cr.Spec.NumberOfRuns, 10, cr.Spec.Locations, cr.Spec.OutputLocationsNumber)
+	lc := ddosify.NewLatencyChecker(cr.Spec.Provider.APIKey, cr.Spec.TargetURL, cr.Spec.NumberOfRuns, ddosify.IntervalTimeToSeconds(cr.Spec.WaitInterval), cr.Spec.Locations, cr.Spec.OutputLocationsNumber)
 	res, err := lc.RunCommandExec()
 	if err != nil {
 
@@ -200,12 +209,12 @@ func (r *LatencyCheckReconciler) runLatencyChecker(log logr.Logger, cr *latencyv
 }
 
 // addFinalizer adds a given finalizer to a given CR
-func (r *LatencyCheckReconciler) addFinalizer(log logr.Logger, cr *latencyv1alpha1.LatencyCheck) error {
+func (r *LatencyCheckReconciler) addFinalizer(log logr.Logger, cr *latencyv1alpha1.LatencyCheck, ctx context.Context) error {
 	log.Info("Adding Finalizer for the LatencyCheck")
 	controllerutil.AddFinalizer(cr, latencyCheckerFinalizer)
 
 	// Update CR
-	err := r.Update(context.Background(), cr)
+	err := r.Update(ctx, cr)
 	if err != nil {
 		log.Error(err, "Failed to update LatencyCheck with finalizer")
 		return err
@@ -279,5 +288,6 @@ func (r *LatencyCheckReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&latencyv1alpha1.LatencyCheck{}).
 		WithEventFilter(ignoreDeletionPredicate()).
+		WithOptions(controller.Options{MaxConcurrentReconciles: concurrentReconciles}).
 		Complete(r)
 }

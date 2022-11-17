@@ -44,7 +44,7 @@ type LatencyCheckSpec struct {
 	Locations             []string               `json:"locations"`
 	OutputLocationsNumber int                    `json:"outputLocationsNumber"`
 	Provider              LatencyCheckerProvider `json:"provider"`
-	Scheduled             bool                   `json:"scheduled,omitempty"`
+	Scheduled             bool                   `json:"scheduled"`
 	ScheduleDefinition    string                 `json:"scheduleDefinition,omitempty"`
 }
 
@@ -57,6 +57,7 @@ type LatencyCheckResult struct {
 type LatencyCheckStatus struct {
 	Results       []LatencyCheckResult `json:"results"`
 	LastExecution string               `json:"lastExecution"`
+	NextExecution string               `json:"nextExecution,omitempty"`
 	Conditions    []metav1.Condition   `json:"conditions"`
 }
 
