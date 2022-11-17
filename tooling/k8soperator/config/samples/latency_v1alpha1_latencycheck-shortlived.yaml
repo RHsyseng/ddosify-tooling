@@ -4,8 +4,8 @@ metadata:
   name: lc-shortlived
 spec:
   targetURL: "https://google.com"
-  numberOfRuns: 2
-  waitInterval: "10s"
+  numberOfRuns: 1
+  waitInterval: "5s"
   locations:
   - "NA.*"
   outputLocationsNumber: 3

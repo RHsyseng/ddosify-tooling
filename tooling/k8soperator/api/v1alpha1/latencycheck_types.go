@@ -50,14 +50,14 @@ type LatencyCheckSpec struct {
 
 type LatencyCheckResult struct {
 	ExecutionTime string                            `json:"executionTime"`
-	Result        *ddosify.LatencyCheckerOutputList `json:"result,omitempty"`
+	Result        *ddosify.LatencyCheckerOutputList `json:"execution,omitempty"`
 }
 
 // LatencyCheckStatus defines the observed state of LatencyCheck
 type LatencyCheckStatus struct {
-	Results       LatencyCheckResult `json:"results"`
-	LastExecution string             `json:"lastExecution"`
-	Conditions    []metav1.Condition `json:"conditions"`
+	Results       []LatencyCheckResult `json:"results"`
+	LastExecution string               `json:"lastExecution"`
+	Conditions    []metav1.Condition   `json:"conditions"`
 }
 
 //+kubebuilder:object:root=true

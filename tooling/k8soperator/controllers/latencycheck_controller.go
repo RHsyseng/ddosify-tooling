@@ -30,7 +30,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"time"
 	//latency "github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
 )
@@ -107,14 +109,15 @@ func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		if err := r.addFinalizer(log, instance); err != nil {
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, nil
+		return ctrl.Result{Requeue: true}, nil
 	}
 	// Run LatencyChecks
 	// Create LatencyCheckerObject
 
 	log.Info("Add or Update")
 	// This instance is an infinite run
-	if instance.Spec.Scheduled {
+	switch {
+	case instance.Spec.Scheduled:
 		output, err := r.runLatencyChecker(log, instance)
 		if err != nil {
 			r.prepareLatencyCheckerStatus(log, err, instance, &output)
@@ -122,33 +125,35 @@ func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			// End reconcile and do not requeue
 			return ctrl.Result{}, nil
 		}
-
 		log.Info("Long-lived run")
 		r.prepareLatencyCheckerStatus(log, err, instance, &output)
 		r.updateLatencyCheckStatus(instance, log)
-		return ctrl.Result{RequeueAfter: 10 * time.Second, Requeue: true}, nil
-	} else if instance.Status.LastExecution == "" {
+		return ctrl.Result{RequeueAfter: 60 * time.Second, Requeue: true}, nil
+	case instance.Status.LastExecution == "":
 		output, err := r.runLatencyChecker(log, instance)
 		log.Info("Short-lived run")
 		r.prepareLatencyCheckerStatus(log, err, instance, &output)
 		r.updateLatencyCheckStatus(instance, log)
 		return ctrl.Result{}, nil
-	} else {
+	default:
 		log.Info("Short-lived run already executed")
 		return ctrl.Result{}, nil
 	}
 }
 
 func (r *LatencyCheckReconciler) prepareLatencyCheckerStatus(log logr.Logger, errRun error, instance *latencyv1alpha1.LatencyCheck, result *ddosify.LatencyCheckerOutputList) {
-	instance.Status.Results = latencyv1alpha1.LatencyCheckResult{
+
+	newResult := latencyv1alpha1.LatencyCheckResult{
 		ExecutionTime: time.Now().Format(time.RFC3339),
 		Result:        result,
 	}
+	// We need to concatenate existing results to the new result
+	instance.Status.Results = append(instance.Status.Results, newResult)
 	instance.Status.LastExecution = time.Now().Format(time.RFC3339)
 	if errRun != nil {
 		log.Info("Error running LatencyChecker")
 		// Update status
-		instance.Status.Results = latencyv1alpha1.LatencyCheckResult{
+		instance.Status.Results[0] = latencyv1alpha1.LatencyCheckResult{
 			ExecutionTime: time.Now().Format(time.RFC3339),
 			Result: &ddosify.LatencyCheckerOutputList{
 				Result: []ddosify.LatencyCheckerOutput{},
@@ -180,7 +185,7 @@ func (r *LatencyCheckReconciler) runLatencyChecker(log logr.Logger, cr *latencyv
 		return ddosify.LatencyCheckerOutputList{}, errors.NewBadRequest(latencyv1alpha1.ConditionIntervalTimeValid)
 	}
 
-	if !ddosify.ValidateCronTime(cr.Spec.ScheduleDefinition) {
+	if cr.Spec.Scheduled && !ddosify.ValidateCronTime(cr.Spec.ScheduleDefinition) {
 		log.Info("Invalid cron time")
 		return ddosify.LatencyCheckerOutputList{}, errors.NewBadRequest(latencyv1alpha1.ConditionScheduleDefinitionValid)
 	}
@@ -255,9 +260,24 @@ func contains(list []string, s string) bool {
 	return false
 }
 
+// Ignore changes that do not increase the resource generation
+func ignoreDeletionPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Ignore updates to CR status in which case metadata.Generation does not change
+			return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Evaluates to false if the object has been confirmed deleted.
+			return !e.DeleteStateUnknown
+		},
+	}
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *LatencyCheckReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&latencyv1alpha1.LatencyCheck{}).
+		WithEventFilter(ignoreDeletionPredicate()).
 		Complete(r)
 }

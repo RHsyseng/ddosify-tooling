@@ -143,29 +143,31 @@ spec:
               lastExecution:
                 type: string
               results:
-                properties:
-                  executionTime:
-                    type: string
-                  result:
-                    properties:
-                      result:
-                        items:
-                          properties:
-                            avgLatency:
-                              type: number
-                            location:
-                              type: string
-                          required:
-                          - avgLatency
-                          - location
-                          type: object
-                        type: array
-                    required:
-                    - result
-                    type: object
-                required:
-                - executionTime
-                type: object
+                items:
+                  properties:
+                    execution:
+                      properties:
+                        result:
+                          items:
+                            properties:
+                              avgLatency:
+                                type: number
+                              location:
+                                type: string
+                            required:
+                            - avgLatency
+                            - location
+                            type: object
+                          type: array
+                      required:
+                      - result
+                      type: object
+                    executionTime:
+                      type: string
+                  required:
+                  - executionTime
+                  type: object
+                type: array
             required:
             - conditions
             - lastExecution
