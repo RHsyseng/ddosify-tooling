@@ -35,6 +35,16 @@ spec:
           spec:
             description: LatencyCheckSpec defines the desired state of LatencyCheck
             properties:
+              acmIntegration:
+                properties:
+                  placementRuleClusterReplicas:
+                    format: int32
+                    type: integer
+                  placementRuleName:
+                    type: string
+                  placementRuleNamespace:
+                    type: string
+                type: object
               locations:
                 items:
                   type: string

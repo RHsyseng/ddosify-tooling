@@ -21,6 +21,7 @@ import (
 	latencyv1alpha1 "github.com/RHsyseng/ddosify-tooling/tooling/k8soperator/api/v1alpha1"
 	"github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
 	"github.com/go-logr/logr"
+	acmPRV1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +36,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"time"
-	//latency "github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
 )
 
 // LatencyCheckReconciler reconciles a LatencyCheck object
@@ -66,6 +66,8 @@ const (
 
 // TODO:
 // - When latencycheck run fails we should output that to a condition/status
+// - We need to fill ACM conditions
+// - Location will require spoke clusters to be labeled as region=NA.US.SC.NC -> We need to update the api, check longlived yaml (clusterLocationLabel)
 
 func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
@@ -130,6 +132,16 @@ func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		// long run
 		output, err := r.runLatencyChecker(log, instance)
 		log.Info("Long-lived run")
+		if !reflect.DeepEqual(instance.Spec.ACMIntegration, latencyv1alpha1.LatencyCheckerACMIntegration{}) {
+			log.Info("Si ACM")
+			err = r.generateACMIntegration(log, instance)
+			if err != nil {
+				log.Info(err.Error())
+				return ctrl.Result{}, err
+			}
+		} else {
+			log.Info("No ACM")
+		}
 		// If error, the status will be empty, and we will requeue in case next time it goes well
 		r.prepareLatencyCheckerStatus(log, err, instance, &output)
 		r.updateLatencyCheckStatus(instance, log)
@@ -139,6 +151,16 @@ func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	output, err := r.runLatencyChecker(log, instance)
 	log.Info("Short-lived run")
 	// If error, the status will be empty
+	if !reflect.DeepEqual(instance.Spec.ACMIntegration, latencyv1alpha1.LatencyCheckerACMIntegration{}) {
+		log.Info("Si ACM")
+		err = r.generateACMIntegration(log, instance)
+		if err != nil {
+			log.Info(err.Error())
+			return ctrl.Result{}, err
+		}
+	} else {
+		log.Info("No ACM integration")
+	}
 	r.prepareLatencyCheckerStatus(log, err, instance, &output)
 	r.updateLatencyCheckStatus(instance, log)
 
@@ -257,6 +279,59 @@ func (r *LatencyCheckReconciler) finalizeLatencyCheck(log logr.Logger, cr *laten
 	// resources that are not owned by this CR, like a PVC.
 	log.Info("Successfully finalized LatencyCheck")
 	return nil
+}
+func (r *LatencyCheckReconciler) generateACMIntegration(log logr.Logger, cr *latencyv1alpha1.LatencyCheck) error {
+	placementRule := r.newPlacementRule(cr)
+	// Check if placementrule already exists
+	placementRuleFound := &acmPRV1.PlacementRule{}
+	err := r.Get(context.Background(), types.NamespacedName{Name: placementRule.Name, Namespace: placementRule.Namespace}, placementRuleFound)
+	if err != nil && errors.IsNotFound(err) {
+		log.Info("Creating a new PlacementRule", "PlacementRule.Namespace", placementRule.Namespace, "PlacementRule.Name", placementRule.Name)
+		err = r.Create(context.Background(), placementRule)
+		if err != nil {
+			return err
+		}
+	} else {
+		log.Info("PlacementRule already exists", "placementRule.Namespace", placementRuleFound.Namespace, "placementRule.Name", placementRuleFound.Name)
+	}
+	return nil
+}
+func (r *LatencyCheckReconciler) newPlacementRule(cr *latencyv1alpha1.LatencyCheck) *acmPRV1.PlacementRule {
+	labels := map[string]string{
+		"app": cr.Name,
+	}
+	if cr.Spec.ACMIntegration.PlacementRuleNamespace == "" {
+		cr.Spec.ACMIntegration.PlacementRuleNamespace = cr.Namespace
+	}
+	if cr.Spec.ACMIntegration.PlacementRuleName == "" {
+		cr.Spec.ACMIntegration.PlacementRuleName = "placementrule-" + cr.Name
+	}
+
+	// If no replicas are defined in the spec, it will be set to 1
+
+	return &acmPRV1.PlacementRule{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps.open-cluster-management.io/v1",
+			Kind:       "PlacementRule",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cr.Spec.ACMIntegration.PlacementRuleName,
+			Namespace: cr.Spec.ACMIntegration.PlacementRuleNamespace,
+			Labels:    labels,
+		},
+		Spec: acmPRV1.PlacementRuleSpec{
+			ClusterReplicas: &cr.Spec.ACMIntegration.PlacementRuleClusterReplicas,
+			GenericPlacementFields: acmPRV1.GenericPlacementFields{
+				ClusterSelector: &metav1.LabelSelector{
+					MatchLabels: nil,
+				},
+			},
+			ClusterConditions: nil,
+		},
+		Status: acmPRV1.PlacementRuleStatus{
+			Decisions: nil,
+		},
+	}
 }
 
 // contains returns true if a string is found on a slice

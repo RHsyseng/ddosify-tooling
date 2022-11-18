@@ -20,27 +20,27 @@ jobs:
       working-directory: ./tooling/
       run: go mod tidy
 
-    - name: Install the Kubectl binary
-      run: |
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        sudo install ./kubectl /usr/local/bin/
-        kubectl version --short --client
+#    - name: Install the Kubectl binary
+#      run: |
+#        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+#        sudo install ./kubectl /usr/local/bin/
+#        kubectl version --short --client
 
-    - name: Install the Kind binary
-      run: |
-        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.8.1/kind-linux-amd64
-        chmod +x ./kind
-        sudo mv ./kind /usr/local/bin/kind
-        kind version
+#    - name: Install the Kind binary
+#      run: |
+#        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.8.1/kind-linux-amd64
+#        chmod +x ./kind
+#        sudo mv ./kind /usr/local/bin/kind
+#        kind version
 
-    - name: Install the operator SDK
-      run: |
-        curl -Lo ./operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/v1.23.0/operator-sdk_linux_amd64
-        chmod +x ./operator-sdk
-        mv ./operator-sdk /usr/local/bin/operator-sdk
+#    - name: Install the operator SDK
+#      run: |
+#        curl -Lo ./operator-sdk https://github.com/operator-framework/operator-sdk/releases/download/v1.23.0/operator-sdk_linux_amd64
+#        chmod +x ./operator-sdk
+#        mv ./operator-sdk /usr/local/bin/operator-sdk
 
-    - name: Create a Kind Cluster
-      run: kind create cluster
+ #   - name: Create a Kind Cluster
+ #     run: kind create cluster
 
     - name: Run Unit Tests
       working-directory: ./tooling/pkg/ddosify

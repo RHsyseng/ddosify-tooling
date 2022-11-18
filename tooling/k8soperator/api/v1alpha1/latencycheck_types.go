@@ -29,6 +29,8 @@ const (
 	ConditionScheduleDefinitionValid       string = "ScheduleDefinitionValid"
 	ConditionScheduleDefinitionNotValidMsg string = "scheduleDefinition value is not valid"
 	ConditionAPITokenValid                 string = "APITokenValid"
+	ConditionACMPlacementRuleUpdated       string = "ACMPlacementRuleUpdated"
+	ConditionACMPlacementRuleUpdatedMsg    string = "ACM PlacementRule has been updated"
 )
 
 type LatencyCheckerProvider struct {
@@ -36,16 +38,23 @@ type LatencyCheckerProvider struct {
 	APIKey       string `json:"apiKey"`
 }
 
+type LatencyCheckerACMIntegration struct {
+	PlacementRuleName            string `json:"placementRuleName,omitempty"`
+	PlacementRuleNamespace       string `json:"placementRuleNamespace,omitempty"`
+	PlacementRuleClusterReplicas int32  `json:"placementRuleClusterReplicas,omitempty"`
+}
+
 // LatencyCheckSpec defines the desired state of LatencyCheck
 type LatencyCheckSpec struct {
-	TargetURL             string                 `json:"targetURL"`
-	NumberOfRuns          int                    `json:"numberOfRuns"`
-	WaitInterval          string                 `json:"waitInterval"`
-	Locations             []string               `json:"locations"`
-	OutputLocationsNumber int                    `json:"outputLocationsNumber"`
-	Provider              LatencyCheckerProvider `json:"provider"`
-	Scheduled             bool                   `json:"scheduled"`
-	ScheduleDefinition    string                 `json:"scheduleDefinition,omitempty"`
+	TargetURL             string                       `json:"targetURL"`
+	NumberOfRuns          int                          `json:"numberOfRuns"`
+	WaitInterval          string                       `json:"waitInterval"`
+	Locations             []string                     `json:"locations"`
+	OutputLocationsNumber int                          `json:"outputLocationsNumber"`
+	Provider              LatencyCheckerProvider       `json:"provider"`
+	ACMIntegration        LatencyCheckerACMIntegration `json:"acmIntegration,omitempty"`
+	Scheduled             bool                         `json:"scheduled"`
+	ScheduleDefinition    string                       `json:"scheduleDefinition,omitempty"`
 }
 
 type LatencyCheckResult struct {

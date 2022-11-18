@@ -9,10 +9,11 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.4.2
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.20.1
+	github.com/open-cluster-management/multicloud-operators-placementrule v0.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.6.1
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.25.4
-	k8s.io/client-go v0.25.4
+	k8s.io/client-go v12.0.0+incompatible
 	sigs.k8s.io/controller-runtime v0.13.1
 )
 
@@ -87,4 +88,10 @@ require (
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
+)
+
+replace (
+	github.com/open-cluster-management/multicloud-operators-placementrule => github.com/stolostron/multicloud-operators-placementrule v1.2.4-1-20220311-8eedb3f
+	k8s.io/client-go => k8s.io/client-go v0.25.4
+
 )
