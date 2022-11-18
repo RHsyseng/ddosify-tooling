@@ -43,9 +43,9 @@ jobs:
       run: kind create cluster
 
     - name: Run Unit Tests
-      working-directory: ./tooling/
+      working-directory: ./tooling/pkg
       run: |
-        GOOS=linux GOARCH=amd64 go test -cover  -v ./... -covermode=count -coverprofile=coverage.out
+        GOOS=linux GOARCH=amd64 go test -cover  -v . -covermode=count -coverprofile=coverage.out
         go tool cover -func=coverage.out -o=/tmp/coverage.out
 
     - name: Go Coverage Badge  # Pass the `coverage.out` output to this action
