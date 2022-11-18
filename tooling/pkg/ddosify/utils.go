@@ -54,16 +54,6 @@ func GetNextTimeCronTime(cronTime string) int64 {
 	// We convert times to epoch and get the seconds remaining to the nextTime
 	duration := nextTime.Unix() - time.Now().Unix()
 	return duration
-
-	/*	// Get current time in RFC3339 format
-		currentTime := time.Now()
-		currentTimeUnix := time.Now().Unix()
-		currentTimeRFC3339 := currentTime.Format(time.RFC3339)
-		// Transform creationTimestap to Unix time
-		t, err := time.Parse(time.RFC3339, subCreationTimestamp)
-		subCreationTimestampUnix := t.Unix()
-		// Check how much time passed since the sub was created (in hours)
-		timeSinceCreated := (currentTimeUnix - subCreationTimestampUnix) / 60 / 60*/
 }
 
 func IntervalTimeToSeconds(interval string) int {
