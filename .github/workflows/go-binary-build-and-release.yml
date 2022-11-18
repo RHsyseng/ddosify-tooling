@@ -43,7 +43,7 @@ jobs:
       run: kind create cluster
 
     - name: Run Unit Tests
-      working-directory: ./tooling/pkg
+      working-directory: ./tooling/pkg/ddosify
       run: |
         GOOS=linux GOARCH=amd64 go test -cover  -v . -covermode=count -coverprofile=coverage.out
         go tool cover -func=coverage.out -o=/tmp/coverage.out
