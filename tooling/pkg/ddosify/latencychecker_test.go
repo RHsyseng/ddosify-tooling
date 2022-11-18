@@ -664,7 +664,7 @@ func TestNewLatencyChecker(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewLatencyChecker(tt.args.targetURL, tt.args.runs, tt.args.waitInterval, tt.args.locations, tt.args.outputLocationsNumber); !reflect.DeepEqual(got, tt.want) {
+			if got := NewLatencyChecker("NOT_SET", tt.args.targetURL, tt.args.runs, tt.args.waitInterval, tt.args.locations, tt.args.outputLocationsNumber); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewLatencyChecker() = %v, want %v", got, tt.want)
 			}
 		})

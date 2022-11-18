@@ -1,7 +1,6 @@
 package ddosify
 
 import (
-	"os"
 	"reflect"
 	"testing"
 )
@@ -211,43 +210,6 @@ func TestValidateURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := ValidateURL(tt.args.inputURL); got != tt.want {
 				t.Errorf("ValidateURL() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_getEnv(t *testing.T) {
-	os.Setenv("TEST_OK", "myvalue")
-	type args struct {
-		varName      string
-		defaultValue string
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "Test OK env variable exists",
-			args: args{
-				varName:      "TEST_OK",
-				defaultValue: "mydefaultvalue",
-			},
-			want: "myvalue",
-		},
-		{
-			name: "Test OK env variable not exists, return default",
-			args: args{
-				varName:      "TEST_DEFAULT",
-				defaultValue: "mydefaultvalue",
-			},
-			want: "mydefaultvalue",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := getEnv(tt.args.varName, tt.args.defaultValue); got != tt.want {
-				t.Errorf("getEnv() = %v, want %v", got, tt.want)
 			}
 		})
 	}
