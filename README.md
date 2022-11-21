@@ -69,24 +69,83 @@ result:
   avglatency: 4
 ~~~
 
-## Idea 2 - K8s Controller
+## K8s Controller
 
-This is a bit more complicated to code, but still doable in a short time. We need to define a new CRD, for example, `latencychecks.ddosify.com`. This CRD will have the following spec fields:
+Following the [cli](./tooling/cmd/) we have coded a [Kubernetes Controller](./tooling/k8soperator/), this operator has the same features exposed in the CLI, plus a scheduling mechanism.
 
-* Target URL - String
-* Locations (as in [docs](https://docs.ddosify.com/cloud/api/latency-testing-api#example-usages-of-locations-object)) - Slice
-* Number of runs - Int
-* Time between runs - String? (to support 60s, 1m, 1d, 1M, 1y…)
-* Recurrent - Bool
+This controller implements the `latencycheck.latency.redhat.com` API, this API is the user interface to schedule/run latencychecks using Kubernetes.
 
-For the CRD status we will have:
+Users can leverage this API to run one-shot latency checks or to schedule latency checks over time.
 
-* Best location
-* Last run time
-* Last run status
-* Next run time?
+Below a one-shot example:
 
-The idea is a controller that runs the checks and outputs the best location to its CRD status.
+:information_source: Below configuration defines a latencycheck that runs only once.
+
+~~~yaml
+apiVersion: latency.redhat.com/v1alpha1
+kind: LatencyCheck
+metadata:
+  name: lc-shortlived
+spec:
+  targetURL: "https://google.com"
+  numberOfRuns: 1
+  waitInterval: "5s"
+  locations:
+  - "NA.*"
+  outputLocationsNumber: 3
+  scheduled: false
+  provider:
+    providerName: "ddosify"
+    apiKey: "90738bc2-9073-4c93-8bc2-ae7608df1b1e"
+~~~
+
+We can also define a scheduled latencycheck:
+
+:information_source: Below configuration defines a latencycheck that runs every minute. The `scheduleDefinition` parameter supports cron-like scheduling definitions.
+
+~~~yaml
+apiVersion: latency.redhat.com/v1alpha1
+kind: LatencyCheck
+metadata:
+  name: lc-longlived
+spec:
+  targetURL: "https://google.com"
+  numberOfRuns: 2
+  waitInterval: "10s"
+  locations:
+  - "NA.*"
+  outputLocationsNumber: 3
+  scheduled: true
+  scheduleDefinition: "*/1 * * * *"
+  provider:
+    providerName: "ddosify"
+    apiKey: "90738bc2-9073-4c93-8bc2-ae7608df1b1e"
+~~~
+
+The way the controller reports the results to the user is via the `status` field, you can see an example below:
+
+~~~yaml
+status:
+  conditions:
+  - lastTransitionTime: "2022-11-18T15:14:53Z"
+    message: waitInterval is not valid
+    reason: IntervalTimeValid
+    status: "False"
+    type: IntervalTimeValid
+  lastExecution: "2022-11-18T16:14:53+01:00"
+  results:
+  - execution:
+      result:
+      - avgLatency: 47
+        location: NA.US.WA.SE
+      - avgLatency: 48
+        location: NA.US.WA.QU
+      - avgLatency: 48
+        location: NA.US.SC.NC
+    executionTime: "2022-11-18T16:14:53+01:00"
+~~~
+
+There are still some rough edges that will be addresses in the next release.
 
 ## Idea 3 - K8s Controller Integration with RHACM
 
