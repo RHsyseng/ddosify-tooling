@@ -22,15 +22,21 @@ import (
 )
 
 const (
-	ConditionTypeReady                     string = "Ready"
-	ConditionTypeLatencyCheckerRunning     string = "LatencyCheckerRunning"
+	ConditionReady                         string = "Ready"
+	ConditionReadyMsg                      string = "LatencyCheck is ready"
+	ConditionNotReady                      string = "NotReady"
+	ConditionNotReadyMsg                   string = "LatencyCheck is not ready"
 	ConditionIntervalTimeValid             string = "IntervalTimeValid"
 	ConditionIntervalTimeNotValidMsg       string = "waitInterval value is not valid"
 	ConditionScheduleDefinitionValid       string = "ScheduleDefinitionValid"
 	ConditionScheduleDefinitionNotValidMsg string = "scheduleDefinition value is not valid"
 	ConditionAPITokenValid                 string = "APITokenValid"
-	ConditionACMPlacementRuleUpdated       string = "ACMPlacementRuleUpdated"
-	ConditionACMPlacementRuleUpdatedMsg    string = "ACM PlacementRule has been updated"
+	ConditionAPITokenNotValidMsg           string = "APIToken is not valid"
+
+	ConditionACMPlacementRuleCreated    string = "ACMPlacementRuleCreated"
+	ConditionACMPlacementRuleCreatedMsg string = "ACM PlacementRule has been created"
+	ConditionACMPlacementRuleUpdated    string = "ACMPlacementRuleUpdated"
+	ConditionACMPlacementRuleUpdatedMsg string = "ACM PlacementRule has been updated"
 )
 
 type LatencyCheckerProvider struct {
@@ -42,6 +48,7 @@ type LatencyCheckerACMIntegration struct {
 	PlacementRuleName            string `json:"placementRuleName,omitempty"`
 	PlacementRuleNamespace       string `json:"placementRuleNamespace,omitempty"`
 	PlacementRuleClusterReplicas int32  `json:"placementRuleClusterReplicas,omitempty"`
+	ClusterLocationLabel         string `json:"clusterLocationLabel,omitempty"`
 }
 
 // LatencyCheckSpec defines the desired state of LatencyCheck
@@ -52,7 +59,7 @@ type LatencyCheckSpec struct {
 	Locations             []string                     `json:"locations"`
 	OutputLocationsNumber int                          `json:"outputLocationsNumber"`
 	Provider              LatencyCheckerProvider       `json:"provider"`
-	ACMIntegration        LatencyCheckerACMIntegration `json:"acmIntegration,omitempty"`
+	ACMIntegration        LatencyCheckerACMIntegration `json:"acmIntegration"`
 	Scheduled             bool                         `json:"scheduled"`
 	ScheduleDefinition    string                       `json:"scheduleDefinition,omitempty"`
 }

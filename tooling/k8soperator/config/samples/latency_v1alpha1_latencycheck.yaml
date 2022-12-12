@@ -4,13 +4,18 @@ metadata:
   name: lc-longlived
 spec:
   targetURL: "https://google.com"
-  numberOfRuns: 2
+  numberOfRuns: 1
   waitInterval: "10s"
   locations:
   - "NA.*"
   outputLocationsNumber: 3
+  acmIntegration:
+    placementRuleName: "test"
+    placementRuleNamespace: "latencychecks"
+    placementRuleClusterReplicas: 1
+    clusterLocationLabel: "testlabel"
   scheduled: true
   scheduleDefinition: "*/1 * * * *"
   provider:
     providerName: "ddosify"
-    apiKey: "3b50ec0f-9073-4c93-8bc2-ae7608df1b1e"
+    apiKey: "changeme"

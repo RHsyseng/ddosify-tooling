@@ -6,6 +6,25 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - apps.open-cluster-management.io
+  resources:
+  - placementrules
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - latency.redhat.com
   resources:
   - latencychecks

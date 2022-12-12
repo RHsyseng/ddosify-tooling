@@ -22,6 +22,7 @@ import (
 	"github.com/RHsyseng/ddosify-tooling/tooling/pkg/ddosify"
 	"github.com/go-logr/logr"
 	acmPRV1 "github.com/open-cluster-management/multicloud-operators-placementrule/pkg/apis/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,20 +55,8 @@ const (
 //+kubebuilder:rbac:groups=latency.redhat.com,resources=latencychecks/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=latency.redhat.com,resources=latencychecks/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the LatencyCheck object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
-
-// TODO:
-// - When latencycheck run fails we should output that to a condition/status
-// - We need to fill ACM conditions
-// - Location will require spoke clusters to be labeled as region=NA.US.SC.NC -> We need to update the api, check longlived yaml (clusterLocationLabel)
+//+kubebuilder:rbac:groups=apps.open-cluster-management.io,resources=placementrules,verbs=get;list;watch;create;update;patch
+//+kubebuilder:rbac:groups=core,resources=namespaces,verbs=get;list;watch
 
 func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
@@ -132,37 +121,49 @@ func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		// long run
 		output, err := r.runLatencyChecker(log, instance)
 		log.Info("Long-lived run")
-		if !reflect.DeepEqual(instance.Spec.ACMIntegration, latencyv1alpha1.LatencyCheckerACMIntegration{}) {
-			log.Info("Si ACM")
+		// If error, the status will be empty, and we will requeue in case next time it goes well
+		r.prepareLatencyCheckerStatus(log, err, instance, &output)
+		// We need to update the status before the ACM integration since that relies on the status of the object
+		r.updateLatencyCheckStatus(instance, log)
+		// Check if there is an RHACM Integration and create the placementrule
+		if !reflect.DeepEqual(instance.Spec.ACMIntegration, latencyv1alpha1.LatencyCheckerACMIntegration{}) && err == nil {
+			log.Info("Detected ACM Integration")
 			err = r.generateACMIntegration(log, instance)
+			// Update status to set ACM conditions
+			r.updateLatencyCheckStatus(instance, log)
 			if err != nil {
 				log.Info(err.Error())
 				return ctrl.Result{}, err
 			}
-		} else {
-			log.Info("No ACM")
 		}
-		// If error, the status will be empty, and we will requeue in case next time it goes well
-		r.prepareLatencyCheckerStatus(log, err, instance, &output)
-		r.updateLatencyCheckStatus(instance, log)
 		return ctrl.Result{RequeueAfter: time.Duration(ddosify.GetNextTimeCronTime(instance.Spec.ScheduleDefinition)) * time.Second, Requeue: true}, nil
 	}
 
-	output, err := r.runLatencyChecker(log, instance)
 	log.Info("Short-lived run")
+	if instance.Status.Results != nil {
+		// If a short-lived run has a status it means it was executed already
+		// we skip the reconcile, this can happen when the controller is restarted
+		// or the spec is modified afterwards
+		log.Info("Short-lived run already executed, skipping")
+		return ctrl.Result{}, nil
+	}
+	output, err := r.runLatencyChecker(log, instance)
+
+	// If error, the status will be empty, and we will requeue in case next time it goes well
+	r.prepareLatencyCheckerStatus(log, err, instance, &output)
+	// We need to update the status before the ACM integration since that relies on the status of the object
+	r.updateLatencyCheckStatus(instance, log)
 	// If error, the status will be empty
-	if !reflect.DeepEqual(instance.Spec.ACMIntegration, latencyv1alpha1.LatencyCheckerACMIntegration{}) {
-		log.Info("Si ACM")
+	if !reflect.DeepEqual(instance.Spec.ACMIntegration, latencyv1alpha1.LatencyCheckerACMIntegration{}) && err == nil {
+		log.Info("Detected ACM Integration")
 		err = r.generateACMIntegration(log, instance)
+		// Update status to set ACM conditions
+		r.updateLatencyCheckStatus(instance, log)
 		if err != nil {
 			log.Info(err.Error())
 			return ctrl.Result{}, err
 		}
-	} else {
-		log.Info("No ACM integration")
 	}
-	r.prepareLatencyCheckerStatus(log, err, instance, &output)
-	r.updateLatencyCheckStatus(instance, log)
 
 	return ctrl.Result{}, nil
 
@@ -199,14 +200,14 @@ func (r *LatencyCheckReconciler) prepareLatencyCheckerStatus(log logr.Logger, er
 			meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionIntervalTimeValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionIntervalTimeValid, Message: latencyv1alpha1.ConditionIntervalTimeNotValidMsg})
 			break
 		case errors.IsInternalError(errRun):
-			meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionAPITokenValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionAPITokenValid, Message: "API Token is not valid"})
+			meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionAPITokenValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionAPITokenValid, Message: latencyv1alpha1.ConditionAPITokenNotValidMsg})
 			break
 		}
 		//set conditions
-		meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionIntervalTimeValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionIntervalTimeValid, Message: "waitInterval is not valid"})
+		meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionNotReady, Status: metav1.ConditionTrue, Reason: latencyv1alpha1.ConditionNotReady, Message: latencyv1alpha1.ConditionNotReadyMsg})
 		return
 	}
-	meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionIntervalTimeValid, Status: metav1.ConditionFalse, Reason: latencyv1alpha1.ConditionIntervalTimeValid, Message: "waitInterval is not valid"})
+	meta.SetStatusCondition(&instance.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionReady, Status: metav1.ConditionTrue, Reason: latencyv1alpha1.ConditionReady, Message: latencyv1alpha1.ConditionReadyMsg})
 }
 
 func (r *LatencyCheckReconciler) runLatencyChecker(log logr.Logger, cr *latencyv1alpha1.LatencyCheck) (ddosify.LatencyCheckerOutputList, error) {
@@ -281,7 +282,7 @@ func (r *LatencyCheckReconciler) finalizeLatencyCheck(log logr.Logger, cr *laten
 	return nil
 }
 func (r *LatencyCheckReconciler) generateACMIntegration(log logr.Logger, cr *latencyv1alpha1.LatencyCheck) error {
-	placementRule := r.newPlacementRule(cr)
+	placementRule := r.newPlacementRule(log, cr)
 	// Check if placementrule already exists
 	placementRuleFound := &acmPRV1.PlacementRule{}
 	err := r.Get(context.Background(), types.NamespacedName{Name: placementRule.Name, Namespace: placementRule.Namespace}, placementRuleFound)
@@ -291,20 +292,45 @@ func (r *LatencyCheckReconciler) generateACMIntegration(log logr.Logger, cr *lat
 		if err != nil {
 			return err
 		}
+		meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionACMPlacementRuleCreated, Status: metav1.ConditionTrue, Reason: latencyv1alpha1.ConditionACMPlacementRuleCreated, Message: latencyv1alpha1.ConditionACMPlacementRuleCreatedMsg})
+	} else if err != nil {
+		return err
 	} else {
-		log.Info("PlacementRule already exists", "placementRule.Namespace", placementRuleFound.Namespace, "placementRule.Name", placementRuleFound.Name)
+		log.Info("PlacementRule updated", "placementRule.Namespace", placementRuleFound.Namespace, "placementRule.Name", placementRuleFound.Name)
+		placementRuleFound.Spec.ClusterSelector.MatchLabels[cr.Spec.ACMIntegration.ClusterLocationLabel] = cr.Status.Results[len(cr.Status.Results)-1].Result.Result[0].Location
+		err = r.Update(context.Background(), placementRuleFound)
+		if err != nil {
+			return err
+		}
+		meta.SetStatusCondition(&cr.Status.Conditions, metav1.Condition{Type: latencyv1alpha1.ConditionACMPlacementRuleUpdated, Status: metav1.ConditionTrue, Reason: latencyv1alpha1.ConditionACMPlacementRuleUpdated, Message: latencyv1alpha1.ConditionACMPlacementRuleUpdatedMsg})
 	}
 	return nil
 }
-func (r *LatencyCheckReconciler) newPlacementRule(cr *latencyv1alpha1.LatencyCheck) *acmPRV1.PlacementRule {
+
+func (r *LatencyCheckReconciler) newPlacementRule(log logr.Logger, cr *latencyv1alpha1.LatencyCheck) *acmPRV1.PlacementRule {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
+	clusterSelectorLabels := map[string]string{
+		// len(cr.Status.Results)-1 will return latest execution result, Result[0].Location will return the best location
+		cr.Spec.ACMIntegration.ClusterLocationLabel: cr.Status.Results[len(cr.Status.Results)-1].Result.Result[0].Location,
+	}
 	if cr.Spec.ACMIntegration.PlacementRuleNamespace == "" {
 		cr.Spec.ACMIntegration.PlacementRuleNamespace = cr.Namespace
+	} else {
+		placementRuleNamespaceFound := &corev1.Namespace{}
+		err := r.Get(context.Background(), types.NamespacedName{Name: cr.Spec.ACMIntegration.PlacementRuleNamespace, Namespace: ""}, placementRuleNamespaceFound)
+		if err != nil && errors.IsNotFound(err) {
+			log.Info("Namespace not found, defaulting to cr namespace")
+			cr.Spec.ACMIntegration.PlacementRuleNamespace = cr.Namespace
+		}
 	}
 	if cr.Spec.ACMIntegration.PlacementRuleName == "" {
 		cr.Spec.ACMIntegration.PlacementRuleName = "placementrule-" + cr.Name
+	}
+
+	if cr.Spec.ACMIntegration.ClusterLocationLabel == "" {
+		cr.Spec.ACMIntegration.ClusterLocationLabel = "region"
 	}
 
 	// If no replicas are defined in the spec, it will be set to 1
@@ -323,7 +349,7 @@ func (r *LatencyCheckReconciler) newPlacementRule(cr *latencyv1alpha1.LatencyChe
 			ClusterReplicas: &cr.Spec.ACMIntegration.PlacementRuleClusterReplicas,
 			GenericPlacementFields: acmPRV1.GenericPlacementFields{
 				ClusterSelector: &metav1.LabelSelector{
-					MatchLabels: nil,
+					MatchLabels: clusterSelectorLabels,
 				},
 			},
 			ClusterConditions: nil,
