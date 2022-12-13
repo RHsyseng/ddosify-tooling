@@ -49,6 +49,8 @@ type LatencyCheckerACMIntegration struct {
 	PlacementRuleNamespace       string `json:"placementRuleNamespace,omitempty"`
 	PlacementRuleClusterReplicas int32  `json:"placementRuleClusterReplicas,omitempty"`
 	ClusterLocationLabel         string `json:"clusterLocationLabel,omitempty"`
+	// +kubebuilder:validation:Enum=continent;country;state;city
+	LocationMatchingStrategy string `json:"locationMatchingStrategy,omitempty"`
 }
 
 // LatencyCheckSpec defines the desired state of LatencyCheck

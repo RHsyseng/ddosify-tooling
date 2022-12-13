@@ -9,11 +9,7 @@ spec:
   locations:
   - "NA.*"
   outputLocationsNumber: 3
-  acmIntegration:
-    placementRuleName: "test"
-    placementRuleNamespace: "latencychecks"
-    placementRuleClusterReplicas: 1
-    clusterLocationLabel: "testlabel"
+  acmIntegration: {}
   scheduled: false
   provider:
     providerName: "ddosify"

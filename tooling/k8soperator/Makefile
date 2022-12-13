@@ -29,7 +29,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
 # redhat.com/k8soperator-bundle:$VERSION and redhat.com/k8soperator-catalog:$VERSION.
-IMAGE_TAG_BASE ?= redhat.com/k8soperator
+IMAGE_TAG_BASE ?= redhat.com/latencycheck-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -117,8 +117,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 .PHONY: docker-build
 docker-build: test ## Build docker image with the manager.
-
-	podman build -t ${IMG} .
+	podman build -f ../Containerfile-operator -t ${IMG} ..
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
 	podman push ${IMG}

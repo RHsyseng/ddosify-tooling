@@ -36,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"strings"
 	"time"
 )
 
@@ -297,7 +298,8 @@ func (r *LatencyCheckReconciler) generateACMIntegration(log logr.Logger, cr *lat
 		return err
 	} else {
 		log.Info("PlacementRule updated", "placementRule.Namespace", placementRuleFound.Namespace, "placementRule.Name", placementRuleFound.Name)
-		placementRuleFound.Spec.ClusterSelector.MatchLabels[cr.Spec.ACMIntegration.ClusterLocationLabel] = cr.Status.Results[len(cr.Status.Results)-1].Result.Result[0].Location
+		placementRuleFound.Spec.ClusterReplicas = &cr.Spec.ACMIntegration.PlacementRuleClusterReplicas
+		placementRuleFound.Spec.ClusterSelector.MatchLabels[cr.Spec.ACMIntegration.ClusterLocationLabel] = r.getPlacementRuleLocation(cr)
 		err = r.Update(context.Background(), placementRuleFound)
 		if err != nil {
 			return err
@@ -307,13 +309,34 @@ func (r *LatencyCheckReconciler) generateACMIntegration(log logr.Logger, cr *lat
 	return nil
 }
 
+func (r *LatencyCheckReconciler) getPlacementRuleLocation(cr *latencyv1alpha1.LatencyCheck) string {
+	// len(cr.Status.Results)-1 will return latest execution result, Result[0].Location will return the best location
+	latencyCheckBestLocation := cr.Status.Results[len(cr.Status.Results)-1].Result.Result[0].Location
+	switch cr.Spec.ACMIntegration.LocationMatchingStrategy {
+	case "continent":
+		// NA
+		return strings.Split(latencyCheckBestLocation, ".")[0]
+	case "country":
+		// NA.US
+		return strings.Join(strings.Split(latencyCheckBestLocation, ".")[:2], ".")
+	case "state":
+		// NA.US.PA
+		return strings.Join(strings.Split(latencyCheckBestLocation, ".")[:3], ".")
+		// case "city" will be covered by default case
+	default:
+		// NA.US.PA.PH
+		return latencyCheckBestLocation
+	}
+}
+
 func (r *LatencyCheckReconciler) newPlacementRule(log logr.Logger, cr *latencyv1alpha1.LatencyCheck) *acmPRV1.PlacementRule {
+	bestLocation := r.getPlacementRuleLocation(cr)
 	labels := map[string]string{
 		"app": cr.Name,
 	}
 	clusterSelectorLabels := map[string]string{
-		// len(cr.Status.Results)-1 will return latest execution result, Result[0].Location will return the best location
-		cr.Spec.ACMIntegration.ClusterLocationLabel: cr.Status.Results[len(cr.Status.Results)-1].Result.Result[0].Location,
+
+		cr.Spec.ACMIntegration.ClusterLocationLabel: bestLocation,
 	}
 	if cr.Spec.ACMIntegration.PlacementRuleNamespace == "" {
 		cr.Spec.ACMIntegration.PlacementRuleNamespace = cr.Namespace

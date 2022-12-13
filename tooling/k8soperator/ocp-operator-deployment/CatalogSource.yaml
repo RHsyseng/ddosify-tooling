@@ -1,8 +1,9 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
-  name: latencycheck-catalog
+  name: telcops-catalog
   namespace: openshift-marketplace
 spec:
+  displayName: "Telcops Catalog"
   sourceType: grpc
-  image: quay.io/mavazque/latencychecks-index:v0.0.1
+  image: quay.io/mavazque/telcops-index:v0.0.1

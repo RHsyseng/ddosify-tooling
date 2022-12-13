@@ -11,24 +11,19 @@ metadata:
             "name": "lc-longlived"
           },
           "spec": {
-            "acmIntegration": {
-              "clusterLocationLabel": "testlabel",
-              "placementRuleClusterReplicas": 1,
-              "placementRuleName": "test",
-              "placementRuleNamespace": "latencychecks"
-            },
+            "acmIntegration": {},
             "locations": [
               "NA.*"
             ],
             "numberOfRuns": 1,
             "outputLocationsNumber": 3,
             "provider": {
-              "apiKey": "2a098fd9-281b-4670-a838-d4b1fde24cb1",
+              "apiKey": "",
               "providerName": "ddosify"
             },
             "scheduleDefinition": "*/1 * * * *",
             "scheduled": true,
-            "targetURL": "https://google.com",
+            "targetURL": "https://redhat.com",
             "waitInterval": "10s"
           }
         }
@@ -114,11 +109,11 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: k8soperator-controller-manager
+        serviceAccountName: latencycheck-controller-manager
       deployments:
       - label:
           control-plane: controller-manager
-        name: latencychecks-controller-manager
+        name: latencycheck-controller-manager
         spec:
           replicas: 1
           selector:
@@ -162,7 +157,8 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: quay.io/mavazque/latencychecks-operator:v0.0.1
+                image: quay.io/mavazque/latencycheck-operator:v0.0.1
+                imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -195,7 +191,7 @@ spec:
                     - ALL
               securityContext:
                 runAsNonRoot: true
-              serviceAccountName: k8soperator-controller-manager
+              serviceAccountName: latencycheck-controller-manager
               terminationGracePeriodSeconds: 10
       permissions:
       - rules:
@@ -230,7 +226,7 @@ spec:
           verbs:
           - create
           - patch
-        serviceAccountName: k8soperator-controller-manager
+        serviceAccountName: latencycheck-controller-manager
     strategy: deployment
   installModes:
   - supported: true

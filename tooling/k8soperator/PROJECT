@@ -4,7 +4,7 @@ layout:
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
-projectName: k8soperator
+projectName: latencycheck-operator
 repo: github.com/RHsyseng/ddosify-tooling
 resources:
 - api:

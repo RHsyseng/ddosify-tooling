@@ -15,9 +15,8 @@ spec:
       kind: LatencyCheck
       name: latencychecks.latency.redhat.com
       version: v1alpha1
-  description: Checks latencies for your application endpoints and can be integrated
-    with RHACM
-  displayName: Latency Checks Operator
+  description: tt
+  displayName: tt
   icon:
   - base64data: ""
     mediatype: ""
@@ -35,17 +34,12 @@ spec:
   - supported: true
     type: AllNamespaces
   keywords:
-  - latency
-  - ddosify
-  - latencycheck
-  - latencies
-  - rhacm
-  - acm
+  - tt
   links:
-  - name: K8soperator
-    url: https://k8soperator.domain
+  - name: Latencycheck Operator
+    url: https://latencycheck-operator.domain
   maturity: alpha
   provider:
-    name: Red Hat Telco Operations
-    url: https://github.com/RHsyseng/
+    name: tt
+    url: tt
   version: 0.0.0

@@ -38,6 +38,13 @@ spec:
                 properties:
                   clusterLocationLabel:
                     type: string
+                  locationMatchingStrategy:
+                    enum:
+                    - continent
+                    - country
+                    - state
+                    - city
+                    type: string
                   placementRuleClusterReplicas:
                     format: int32
                     type: integer
