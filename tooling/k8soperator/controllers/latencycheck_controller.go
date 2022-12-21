@@ -310,7 +310,7 @@ func (r *LatencyCheckReconciler) generateACMIntegration(log logr.Logger, cr *lat
 }
 
 func (r *LatencyCheckReconciler) getPlacementRuleLocation(cr *latencyv1alpha1.LatencyCheck) string {
-	// len(cr.Status.Results)-1 will return latest execution result, Result[0].Location will return the best location
+	// len(cr.Status.Results)-1 will return the latest execution result, Result[0].Location will return the best location
 	latencyCheckBestLocation := cr.Status.Results[len(cr.Status.Results)-1].Result.Result[0].Location
 	switch cr.Spec.ACMIntegration.LocationMatchingStrategy {
 	case "continent":
@@ -322,7 +322,7 @@ func (r *LatencyCheckReconciler) getPlacementRuleLocation(cr *latencyv1alpha1.La
 	case "state":
 		// NA.US.PA
 		return strings.Join(strings.Split(latencyCheckBestLocation, ".")[:3], ".")
-		// case "city" will be covered by default case
+	// case "city" will be covered by default case
 	default:
 		// NA.US.PA.PH
 		return latencyCheckBestLocation

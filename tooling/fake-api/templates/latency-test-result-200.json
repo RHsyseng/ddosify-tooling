@@ -1,0 +1,210 @@
+{
+    "AS.TR.AN": {
+        "status_code": 200,
+        "latency": 74
+    },
+    "NA.US.UT.SLC": {
+        "status_code": 200,
+        "latency": 148
+    },
+    "NA.US.NV.LV": {
+        "status_code": 200,
+        "latency": 200
+    },
+    "OC.AU.NSW.SY": {
+        "status_code": 200,
+        "latency": 294
+    },
+    "AS.IN.MH.PU": {
+        "status_code": 200,
+        "latency": 143
+    },
+    "AS.AE.DU": {
+        "status_code": 200,
+        "latency": 126
+    },
+    "AS.ID.JK": {
+        "status_code": 200,
+        "latency": 261
+    },
+    "AS.CN.HCW.HK": {
+        "status_code": 200,
+        "latency": 209
+    },
+    "NA.US.OR.PO": {
+        "status_code": 200,
+        "latency": 183
+    },
+    "NA.US.WA.QU": {
+        "status_code": 200,
+        "latency": 162
+    },
+    "AS.TR.IZ": {
+        "status_code": 200,
+        "latency": 61
+    },
+    "EU.ES.MA": {
+        "status_code": 200,
+        "latency": 46
+    },
+    "EU.PL.MZ.WA": {
+        "status_code": 200,
+        "latency": 32
+    },
+    "AS.TW.TP": {
+        "status_code": 200,
+        "latency": 259
+    },
+    "EU.DE.HE.FR": {
+        "status_code": 200,
+        "latency": 16
+    },
+    "AF.ZA.WC.CT": {
+        "status_code": 200,
+        "latency": 173
+    },
+    "EU.CH.ZH": {
+        "status_code": 200,
+        "latency": 22
+    },
+    "NA.US.CA.SJ": {
+        "status_code": 200,
+        "latency": 169
+    },
+    "SA.CL.RM.SA": {
+        "status_code": 200,
+        "latency": 221
+    },
+    "EU.FI.SK.LA": {
+        "status_code": 200,
+        "latency": 68
+    },
+    "AS.TR.IS": {
+        "status_code": 200,
+        "latency": 57
+    },
+    "NA.US.TX.DA": {
+        "status_code": 200,
+        "latency": 161
+    },
+    "NA.US.TX.HO": {
+        "status_code": 200,
+        "latency": 131
+    },
+    "AS.TR.DE": {
+        "status_code": 200,
+        "latency": 64
+    },
+    "AS.IL.TA": {
+        "status_code": 200,
+        "latency": 74
+    },
+    "OC.AU.VIC.ME": {
+        "status_code": 200,
+        "latency": 304
+    },
+    "EU.SE.ST": {
+        "status_code": 200,
+        "latency": 40
+    },
+    "NA.US.OH.DU": {
+        "status_code": 200,
+        "latency": 110
+    },
+    "NA.US.IL.CH": {
+        "status_code": 200,
+        "latency": 123
+    },
+    "AS.BH.MA": {
+        "status_code": 200,
+        "latency": 118
+    },
+    "EU.NO.OS": {
+        "status_code": 200,
+        "latency": 35
+    },
+    "NA.US.AZ.PH": {
+        "status_code": 200,
+        "latency": 147
+    },
+    "NA.US.IA.DM": {
+        "status_code": 200,
+        "latency": 129
+    },
+    "AS.IN.DL.ND": {
+        "status_code": 200,
+        "latency": 275
+    },
+    "EU.FR.IDF.PA": {
+        "status_code": 200,
+        "latency": 28
+    },
+    "AS.SG.01.SI": {
+        "status_code": 200,
+        "latency": 172
+    },
+    "AS.KR.SE": {
+        "status_code": 200,
+        "latency": 284
+    },
+    "EU.IE.L.DU": {
+        "status_code": 200,
+        "latency": 40
+    },
+    "NA.CA.QC.MO": {
+        "status_code": 200,
+        "latency": 110
+    },
+    "NA.US.SC.NC": {
+        "status_code": 200,
+        "latency": 113
+    },
+    "EU.IT.25.MI": {
+        "status_code": 200,
+        "latency": 22
+    },
+    "AF.ZA.GP.JO": {
+        "status_code": 200,
+        "latency": 192
+    },
+    "EU.NL.NH.AM": {
+        "status_code": 200,
+        "latency": 23
+    },
+    "AS.QA.DA.DO": {
+        "status_code": 200,
+        "latency": 137
+    },
+    "NA.US.VA.AS": {
+        "status_code": 200,
+        "latency": 106
+    },
+    "NA.CA.ON.TO": {
+        "status_code": 200,
+        "latency": 121
+    },
+    "AS.JP.TO": {
+        "status_code": 200,
+        "latency": 251
+    },
+    "AS.JP.OS": {
+        "status_code": 200,
+        "latency": 256
+    },
+    "AS.IN.MH.MU": {
+        "status_code": 200,
+        "latency": 138
+    },
+    "EU.GB.ENG.LO": {
+        "status_code": 200,
+        "latency": 28
+    },
+    "SA.BR.SA": {
+        "status_code": 200,
+        "latency": 218
+    },
+    "NA.US.TX.SA": {
+        "status_code": 200,
+        "latency": 151
+    }
+}
