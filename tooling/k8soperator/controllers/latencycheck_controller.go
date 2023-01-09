@@ -57,6 +57,7 @@ const (
 //+kubebuilder:rbac:groups=latency.redhat.com,resources=latencychecks/finalizers,verbs=update
 
 //+kubebuilder:rbac:groups=apps.open-cluster-management.io,resources=placementrules,verbs=get;list;watch;create;update;patch
+//+kubebuilder:rbac:groups=cluster.open-cluster-management.io,resources=managedclusters,verbs=get;list
 //+kubebuilder:rbac:groups=core,resources=namespaces,verbs=get;list;watch
 
 func (r *LatencyCheckReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

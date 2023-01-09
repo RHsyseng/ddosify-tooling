@@ -64,6 +64,13 @@ spec:
           - update
           - watch
         - apiGroups:
+          - cluster.open-cluster-management.io
+          resources:
+          - managedclusters
+          verbs:
+          - get
+          - list
+        - apiGroups:
           - ""
           resources:
           - namespaces
