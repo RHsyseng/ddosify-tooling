@@ -1,0 +1,11 @@
+{
+    "EU.ES.MA": {
+        "status_code": 200,
+        "latency": 42
+    },
+    "EU.ES.BCN": {
+        "status_code": 200,
+        "latency": 44
+    }
+}
+
