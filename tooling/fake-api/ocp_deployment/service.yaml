@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ddosify-fakeapi
+  name: ddosify-fakeapi
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: https
+    name: https
+  selector:
+    app: ddosify-fakeapi
+  type: ClusterIP

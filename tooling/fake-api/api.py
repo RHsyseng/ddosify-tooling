@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+import os
 import flask
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -17,8 +18,9 @@ def balance_resource():
 def latency_test_resource():
     return flask.render_template('latency-test-result-200.json')
 
-def run():
-    app.run(host='::', port=443, debug=False, ssl_context=("./cert.pem","./cert.key"))
+def run(port):
+    app.run(host='::', port=port, debug=False, ssl_context=("./cert.pem","./cert.key"))
 
 if __name__ == '__main__':
-    run()
+    port = os.getenv('API_PORT', 443)
+    run(port)

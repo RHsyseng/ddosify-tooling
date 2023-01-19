@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ddosify-fakeapi
+  labels:
+    app: ddosify-fakeapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ddosify-fakeapi
+  template:
+    metadata:
+      labels:
+        app: ddosify-fakeapi
+    spec:
+      containers:
+      - name: reverse-words
+        image: quay.io/mavazque/dddosify-fake-api:latest
+        ports:
+        - containerPort: 8443
+          name: https
+        env:
+        - name: API_PORT
+          value: "8443"
