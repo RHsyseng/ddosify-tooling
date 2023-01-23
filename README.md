@@ -147,21 +147,23 @@ status:
 
 There are still some rough edges that will be addresses in the next release.
 
-## Idea 3 - K8s Controller Integration with RHACM
+## K8s Controller Integration with RHACM
 
-This will be the most complicated idea to code, but probably the one that provides a more compelling user story.
+The controller can be integrated with RHACM, the way it integrates with RHACM is via the creation of PlacementRules.
 
-We will use the output from idea2 to update/create a PlacementRule.
+There is a new section in the `LatencyCheck` spec, this section is named `acmIntegration` and it looks like this:
 
-Prerequisites:
+~~~yaml
+  acmIntegration:
+    clusterLocationLabel: ddosify
+    locationMatchingStrategy: city
+    placementRuleClusterReplicas: 1
+    placementRuleName: ddosify-demo
+    placementRuleNamespace: DEMO_NAMESPACE
+~~~
 
-* Managed clusters need to have labels matching the locations (as in [docs](https://docs.ddosify.com/cloud/api/latency-testing-api#example-usages-of-locations-object))
-
-New spec fields:
-
-* PlacementRuleNamespace
-* PlacementRuleName
-
-New status fields:
-
-* PlacementRuleAction - String (Created / Updated / NoAction)
+* `clusterLocationLabel` defines the label that is used in the managed clusters to match them to a ddosify location. It must use [ddosify locations](https://docs.ddosify.com/cloud/api/latency-testing-api).
+* `locationMatchingStrategy` defines at what level we match the managed clusters, we can chose between continent, country, state or city. For example, for `NA.US.PA.PH`: Continent will be NA, country will be NA.US, state will be NA.US.PA, and city will be NA.US.PA.PH.
+* `placementRuleClusterReplicas` defines the number of clusters we want to target in case we have more than one matching a specific location.
+* `placementRuleName` defines the name for the PlacementRule that will be created or updated in case it already exists.
+* `placementRuleNamespace` defines the namespace where the PlacementRule will be created.
